@@ -1,12 +1,13 @@
 
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2019",
+    "module": "esnext",
+    "target": "esnext",
     "strict": true,
     "declaration": true,
     "outDir": "dist",
     "removeComments": true,
+    "allowJs": true,
     "moduleResolution": "node"
   }
 }
