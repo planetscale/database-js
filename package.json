@@ -1,0 +1,29 @@
+{
+  "name": "@planetscale/edge",
+  "version": "0.0.1",
+  "description": "A JavaScript client for communicating with PlanetScale Edge API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/planetscale/edge-js.git"
+  },
+  "keywords": [
+    "planetscale",
+    "database",
+    "mysql",
+    "vitess",
+    "edge",
+    "serverless",
+    "vercel",
+    "lambda"
+  ],
+  "author": "PlanetScale",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/planetscale/edge-js/issues"
+  },
+  "homepage": "https://github.com/planetscale/edge-js#readme"
+}
