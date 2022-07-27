@@ -2,7 +2,8 @@
   "name": "@planetscale/edge",
   "version": "0.0.1",
   "description": "A JavaScript client for communicating with PlanetScale Edge API.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
   "scripts": {
     "test": "jest"
   },
@@ -25,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/planetscale/edge-js/issues"
   },
-  "homepage": "https://github.com/planetscale/edge-js#readme"
+  "homepage": "https://github.com/planetscale/edge-js#readme",
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  }
 }
