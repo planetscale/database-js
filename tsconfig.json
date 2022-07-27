@@ -1,0 +1,12 @@
+
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2019",
+    "strict": true,
+    "declaration": true,
+    "outDir": "dist",
+    "removeComments": true,
+    "moduleResolution": "node"
+  }
+}
