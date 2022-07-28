@@ -3,6 +3,9 @@
  * https://jestjs.io/docs/configuration
  */
 
+import { pathsToModuleNameMapper } from 'ts-jest'
+import { compilerOptions } from './tsconfig.json'
+
 export default {
   // All imported modules in your tests should be mocked automatically
   // automock: false,
@@ -16,6 +19,7 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
 
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
   // Automatically clear mock calls, instances, contexts and results before every test
   clearMocks: true
 

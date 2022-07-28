@@ -9,6 +9,8 @@
     "removeComments": true,
     "allowJs": true,
     "moduleResolution": "node",
-    "esModuleInterop": true
+    "paths": {},
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   }
 }
