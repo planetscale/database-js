@@ -1,4 +1,3 @@
-
 type Something<T> = { some: T; none: false }
 type Nothing = { none: true }
 export type Option<T> = Something<T> | Nothing
