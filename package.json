@@ -4,6 +4,15 @@
   "description": "A JavaScript client for communicating with PlanetScale Edge API.",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
+  "prettier": {
+    "semi": false,
+    "trailingComma": "none",
+    "singleQuote": true,
+    "printWidth": 120,
+    "tabWidth": 2,
+    "useTabs": false,
+    "bracketSpacing": true
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
