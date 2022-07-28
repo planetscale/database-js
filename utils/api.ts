@@ -67,3 +67,9 @@ export async function apiResult<T>(whenResponse: Promise<Response>): Promise<Res
     return { err: e }
   }
 }
+
+export function apiMessage(error: Error): string {
+  return error instanceof ClientError
+    ? error.body.message
+    : 'There was an error contacting the server. Please try again.'
+}
