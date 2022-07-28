@@ -1,11 +1,10 @@
-import {Result, apiResult, unwrap, apiMessage, ClientError} from "../utils/api"
-import {utf8Encode} from "../utils/text"
+import { Result, apiResult, unwrap, apiMessage, ClientError } from './api'
+import { utf8Encode } from './text'
 
 export interface Credentials {
   username: string
   password: string
   mysqlAddress: string
-
 }
 
 export interface QueryResultRow {
@@ -92,8 +91,7 @@ export default class Client {
     }
   }
 
-
-async createSession(): Promise<QuerySession> {
+  async createSession(): Promise<QuerySession> {
     const saved = await this.postJSON<QueryExecuteResponse>(
       `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`,
       {}
@@ -135,7 +133,7 @@ async createSession(): Promise<QuerySession> {
           rows,
           size: rows.length,
           statement: rawQuery,
-          time: elapsedTime,
+          time: elapsedTime
         }
       } else if (saved.ok && saved.ok.error) {
         return {
