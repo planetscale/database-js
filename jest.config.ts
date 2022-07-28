@@ -13,6 +13,9 @@ export default {
   // The directory where Jest should store its cached dependency information
   // cacheDirectory: "/private/var/folders/39/wx5hr2ps64d83gpwscpz2jg80000gn/T/jest_dx",
 
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+
   // Automatically clear mock calls, instances, contexts and results before every test
   clearMocks: true
 
