@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.js",
   "scripts": {
+    "build": "tsc",
     "lint": "eslint .",
     "test": "jest"
   },
