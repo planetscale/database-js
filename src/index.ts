@@ -35,8 +35,9 @@ class Client {
           credentials: 'include'
         })
       )
+
       return result.err ? { err: result.err } : { ok: unwrap(result.ok) }
-    } catch (e) {
+    } catch (e: any) {
       // Catch error in case something goes awry with fetching auth header.
       return { err: e }
     }

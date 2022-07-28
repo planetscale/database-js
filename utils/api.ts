@@ -17,6 +17,11 @@ export function unwrap<T>(option: Option<T>): T {
   return value
 }
 
+export type Result<T, E = Error> = {
+  ok?: T
+  err?: E
+}
+
 export type ApiError = {
   code: string
   message: string
@@ -58,13 +63,7 @@ export async function apiResult<T>(whenResponse: Promise<Response>): Promise<Res
       const error = new ServerError(response.statusText, response.status)
       return { err: error }
     }
-  } catch (e) {
+  } catch (e: any) {
     return { err: e }
   }
 }
-
-export type Result<T, E = Error> = {
-  ok?: T
-  err?: E
-}
-
