@@ -56,7 +56,6 @@ export interface QueryResult {
 
 export default class Client {
   credentials: Credentials
-  session: QuerySession | null
 
   constructor(credentials: Credentials) {
     this.credentials = credentials
@@ -70,30 +69,27 @@ export default class Client {
     }
   }
 
-  async postJSON<T>(url: string, body?: unknown): Promise<Result<T>> {
-    try {
-      const result = await apiResult<T>(
-        fetch(url, {
-          method: 'POST',
-          body: body ? JSON.stringify(body) : undefined,
-          headers: {
-            'Content-Type': 'application/json',
-            ...this.authorizationHeader()
-          },
-          credentials: 'include'
-        })
-      )
+  async execute(query: string): Promise<ExecutedQuery> {
+    return this.connection().execute(query)
+  }
 
-      return result.err ? { err: result.err } : { ok: unwrap(result.ok) }
-    } catch (e: any) {
-      // Catch error in case something goes awry with fetching auth header.
-      return { err: e }
-    }
+  connection(): Connection {
+    return new Connection(this)
+  }
+}
+
+export class Connection {
+  client: Client
+  session: QuerySession | null
+
+  constructor(client: Client) {
+    this.client = client
+    this.session = null
   }
 
   async createSession(): Promise<QuerySession> {
     const saved = await this.postJSON<QueryExecuteResponse>(
-      `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`,
+      `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`,
       {}
     )
     if (saved.ok && !saved.ok.error) {
@@ -106,68 +102,73 @@ export default class Client {
     }
   }
 
-  async execute(query: string): Promise<ExecutedQuery> {
+  async postJSON<T>(url: string, body?: unknown): Promise<Result<T>> {
     try {
-      const startTime = new Date().getTime()
-      const saved = await this.postJSON<QueryExecuteResponse>(
-        `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
-        {
-          query: query,
-          session: this.session
-        }
+      const result = await apiResult<T>(
+        fetch(url, {
+          method: 'POST',
+          body: body ? JSON.stringify(body) : undefined,
+          headers: {
+            'Content-Type': 'application/json',
+            ...this.client.authorizationHeader()
+          },
+          credentials: 'include'
+        })
       )
-      const endTime = new Date().getTime()
-      const elapsedTime = endTime - startTime
-      if (saved.ok && !saved.ok.error) {
-        const body = saved.ok
-        const result = body.result
-        const rows = result ? parse(result) : null
-        const headers = result?.fields?.map((f) => f.name)
 
-        this.session = body.session
-
-        // Transform response into something we understand, this matches our
-        // console's `QueryConsole` response format.
-        return {
-          headers,
-          rows,
-          size: rows.length,
-          statement: query,
-          time: elapsedTime
-        }
-      } else if (saved.ok && saved.ok.error) {
-        return {
-          statement: query,
-          errorMessage: saved.ok.error.message,
-          time: elapsedTime
-        }
-      } else {
-        let errorCode: string | null = null
-        if (saved.err instanceof ClientError) {
-          errorCode = saved.err.body.code
-        }
-
-        return {
-          statement: query,
-          errorCode: errorCode,
-          errorMessage: apiMessage(saved.err),
-          time: elapsedTime
-        }
-      }
-    } catch (e) {
-      return {
-        statement: query,
-        errorMessage: 'An unexpected error occurred. Please try again later.'
-      }
+      return result.err ? { err: result.err } : { ok: unwrap(result.ok) }
+    } catch (e: any) {
+      return { err: e }
     }
   }
 
-  async Session(): Promise<QuerySession | null> {
-    if (this.session) {
-      return this.session
-    }
+  async execute(query: string): Promise<ExecutedQuery> {
+    const startTime = new Date().getTime()
+    const saved = await this.postJSON<QueryExecuteResponse>(
+      `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
+      {
+        query: query,
+        session: this.session
+      }
+    )
+    const endTime = new Date().getTime()
+    const elapsedTime = endTime - startTime
+    if (saved.ok && !saved.ok.error) {
+      const body = saved.ok
+      const result = body.result
+      const rows = result ? parse(result) : null
+      const headers = result?.fields?.map((f) => f.name)
 
-    return await this.createSession()
+      this.session = body.session
+
+      // Transform response into something we understand, this matches our
+      // console's `QueryConsole` response format.
+      return {
+        headers,
+        rows,
+        size: rows.length,
+        statement: query,
+        time: elapsedTime
+      }
+    } else if (saved.ok && saved.ok.error) {
+      return {
+        statement: query,
+        errorMessage: saved.ok.error.message,
+        time: elapsedTime
+      }
+    } else {
+      let errorCode: string | null = null
+      if (saved.err instanceof ClientError) {
+        errorCode = saved.err.body.code
+      }
+
+      return {
+        statement: query,
+        errorCode: errorCode,
+        errorMessage: apiMessage(saved.err),
+        time: elapsedTime
+      }
+    }
   }
 }
 
