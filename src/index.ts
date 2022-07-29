@@ -3,7 +3,7 @@ import { utf8Encode } from './text.js'
 export interface Credentials {
   username: string
   password: string
-  mysqlAddress: string
+  host: string
 }
 
 export interface QueryResultRow {
@@ -92,13 +92,13 @@ export class Connection {
   }
 
   private async createSession(): Promise<QuerySession> {
-    const url = `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`
+    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.credentials.host}`)
     const { session } = await this.postJSON<QueryExecuteResponse>(url)
     this.session = session
     return session
   }
 
-  private async postJSON<T>(url: string, body = {}): Promise<T> {
+  private async postJSON<T>(url: string | URL, body = {}): Promise<T> {
     const auth = btoa(`${this.credentials.username}:${this.credentials.password}`)
     const response = await fetch(url, {
       method: 'POST',
@@ -120,7 +120,7 @@ export class Connection {
 
   async execute(query: string): Promise<ExecutedQuery> {
     const startTime = Date.now()
-    const url = `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`
+    const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.credentials.host}`)
     const saved = await this.postJSON<QueryExecuteResponse>(url, {
       query: query,
       session: this.session
