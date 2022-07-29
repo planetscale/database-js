@@ -7,6 +7,10 @@
     "outDir": "dist",
     "removeComments": true,
     "allowJs": true,
-    "moduleResolution": "node"
-  }
+    "moduleResolution": "node",
+    "paths": {},
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "files": ["src/index.ts"]
 }
