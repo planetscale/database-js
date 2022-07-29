@@ -56,7 +56,6 @@ export interface QueryResult {
 
 export default class Client {
   credentials: Credentials
-  session: QuerySession | null
 
   constructor(credentials: Credentials) {
     this.credentials = credentials
@@ -70,30 +69,27 @@ export default class Client {
     }
   }
 
-  async postJSON<T>(url: string, body?: unknown): Promise<Result<T>> {
-    try {
-      const result = await apiResult<T>(
-        fetch(url, {
-          method: 'POST',
-          body: body ? JSON.stringify(body) : undefined,
-          headers: {
-            'Content-Type': 'application/json',
-            ...this.authorizationHeader()
-          },
-          credentials: 'include'
-        })
-      )
+  async execute(query: string): Promise<ExecutedQuery> {
+    return this.connection().execute(query)
+  }
 
-      return result.err ? { err: result.err } : { ok: unwrap(result.ok) }
-    } catch (e: any) {
-      // Catch error in case something goes awry with fetching auth header.
-      return { err: e }
-    }
+  connection(): Connection {
+    return new Connection(this)
+  }
+}
+
+export class Connection {
+  client: Client
+  session: QuerySession | null
+
+  constructor(client: Client) {
+    this.client = client
+    this.session = null
   }
 
   async createSession(): Promise<QuerySession> {
     const saved = await this.postJSON<QueryExecuteResponse>(
-      `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`,
+      `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`,
       {}
     )
     if (saved.ok && !saved.ok.error) {
@@ -106,11 +102,31 @@ export default class Client {
     }
   }
 
+  async postJSON<T>(url: string, body?: unknown): Promise<Result<T>> {
+    try {
+      const result = await apiResult<T>(
+        fetch(url, {
+          method: 'POST',
+          body: body ? JSON.stringify(body) : undefined,
+          headers: {
+            'Content-Type': 'application/json',
+            ...this.client.authorizationHeader()
+          },
+          credentials: 'include'
+        })
+      )
+
+      return result.err ? { err: result.err } : { ok: unwrap(result.ok) }
+    } catch (e: any) {
+      return { err: e }
+    }
+  }
+
   async execute(query: string): Promise<ExecutedQuery> {
     try {
       const startTime = new Date().getTime()
       const saved = await this.postJSON<QueryExecuteResponse>(
-        `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
+        `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
         {
           query: query,
           session: this.session
@@ -155,19 +171,8 @@ export default class Client {
         }
       }
     } catch (e) {
-      return {
-        statement: query,
-        errorMessage: 'An unexpected error occurred. Please try again later.'
-      }
+      throw e
     }
-  }
-
-  async Session(): Promise<QuerySession | null> {
-    if (this.session) {
-      return this.session
-    }
-
-    return await this.createSession()
   }
 }
 
