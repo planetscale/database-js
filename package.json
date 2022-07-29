@@ -17,7 +17,7 @@
     "bracketSpacing": true
   },
   "scripts": {
-    "tsc": "tsc",
+    "build": "tsc",
     "lint": "eslint .",
     "test": "jest"
   },
