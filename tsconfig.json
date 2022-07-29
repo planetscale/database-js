@@ -11,5 +11,6 @@
     "paths": {},
     "esModuleInterop": true,
     "resolveJsonModule": true
-  }
+  },
+  "files": ["src/index.ts"]
 }
