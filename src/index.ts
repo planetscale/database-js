@@ -123,55 +123,51 @@ export class Connection {
   }
 
   async execute(query: string): Promise<ExecutedQuery> {
-    try {
-      const startTime = new Date().getTime()
-      const saved = await this.postJSON<QueryExecuteResponse>(
-        `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
-        {
-          query: query,
-          session: this.session
-        }
-      )
-      const endTime = new Date().getTime()
-      const elapsedTime = endTime - startTime
-      if (saved.ok && !saved.ok.error) {
-        const body = saved.ok
-        const result = body.result
-        const rows = result ? parse(result) : null
-        const headers = result?.fields?.map((f) => f.name)
-
-        this.session = body.session
-
-        // Transform response into something we understand, this matches our
-        // console's `QueryConsole` response format.
-        return {
-          headers,
-          rows,
-          size: rows.length,
-          statement: query,
-          time: elapsedTime
-        }
-      } else if (saved.ok && saved.ok.error) {
-        return {
-          statement: query,
-          errorMessage: saved.ok.error.message,
-          time: elapsedTime
-        }
-      } else {
-        let errorCode: string | null = null
-        if (saved.err instanceof ClientError) {
-          errorCode = saved.err.body.code
-        }
-
-        return {
-          statement: query,
-          errorCode: errorCode,
-          errorMessage: apiMessage(saved.err),
-          time: elapsedTime
-        }
+    const startTime = new Date().getTime()
+    const saved = await this.postJSON<QueryExecuteResponse>(
+      `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
+      {
+        query: query,
+        session: this.session
       }
-    } catch (e) {
-      throw e
+    )
+    const endTime = new Date().getTime()
+    const elapsedTime = endTime - startTime
+    if (saved.ok && !saved.ok.error) {
+      const body = saved.ok
+      const result = body.result
+      const rows = result ? parse(result) : null
+      const headers = result?.fields?.map((f) => f.name)
+
+      this.session = body.session
+
+      // Transform response into something we understand, this matches our
+      // console's `QueryConsole` response format.
+      return {
+        headers,
+        rows,
+        size: rows.length,
+        statement: query,
+        time: elapsedTime
+      }
+    } else if (saved.ok && saved.ok.error) {
+      return {
+        statement: query,
+        errorMessage: saved.ok.error.message,
+        time: elapsedTime
+      }
+    } else {
+      let errorCode: string | null = null
+      if (saved.err instanceof ClientError) {
+        errorCode = saved.err.body.code
+      }
+
+      return {
+        statement: query,
+        errorCode: errorCode,
+        errorMessage: apiMessage(saved.err),
+        time: elapsedTime
+      }
     }
   }
 }
