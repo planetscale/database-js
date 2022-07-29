@@ -60,14 +60,6 @@ export default class Client {
     this.credentials = credentials
   }
 
-  authorizationHeader() {
-    const value = btoa(`${this.credentials.username}:${this.credentials.password}`)
-
-    return {
-      Authorization: `Basic ${value}`
-    }
-  }
-
   async execute(query: string): Promise<ExecutedQuery> {
     return this.connection().execute(query)
   }
@@ -103,12 +95,13 @@ export class Connection {
   }
 
   private async postJSON<T>(url: string, body = {}): Promise<T> {
+    const auth = btoa(`${this.client.credentials.username}:${this.client.credentials.password}`)
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json',
-        ...this.client.authorizationHeader()
+        Authorization: `Basic ${auth}`
       },
       credentials: 'include'
     })
