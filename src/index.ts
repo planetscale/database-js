@@ -53,7 +53,7 @@ export interface QueryResult {
   rows?: QueryResultRow[]
 }
 
-export default class Client {
+export class Client {
   credentials: Credentials
 
   constructor(credentials: Credentials) {
@@ -65,16 +65,20 @@ export default class Client {
   }
 
   connection(): Connection {
-    return new Connection(this)
+    return new Connection(this.credentials)
   }
 }
 
+export function connect(credentials: Credentials): Connection {
+  return new Connection(credentials)
+}
+
 export class Connection {
-  private client: Client
+  private credentials: Credentials
   private session: QuerySession | null
 
-  constructor(client: Client) {
-    this.client = client
+  constructor(credentials: Credentials) {
+    this.credentials = credentials
     this.session = null
   }
 
@@ -88,14 +92,14 @@ export class Connection {
   }
 
   private async createSession(): Promise<QuerySession> {
-    const url = `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`
+    const url = `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`
     const { session } = await this.postJSON<QueryExecuteResponse>(url)
     this.session = session
     return session
   }
 
   private async postJSON<T>(url: string, body = {}): Promise<T> {
-    const auth = btoa(`${this.client.credentials.username}:${this.client.credentials.password}`)
+    const auth = btoa(`${this.credentials.username}:${this.credentials.password}`)
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -116,7 +120,7 @@ export class Connection {
 
   async execute(query: string): Promise<ExecutedQuery> {
     const startTime = Date.now()
-    const url = `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`
+    const url = `${this.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`
     const saved = await this.postJSON<QueryExecuteResponse>(url, {
       query: query,
       session: this.session
