@@ -1,4 +1,3 @@
-import { Result, apiResult, unwrap, apiMessage, ClientError } from './api.js'
 import { utf8Encode } from './text.js'
 
 export interface Credentials {
@@ -79,95 +78,72 @@ export default class Client {
 }
 
 export class Connection {
-  client: Client
-  session: QuerySession | null
+  private client: Client
+  private session: QuerySession | null
 
   constructor(client: Client) {
     this.client = client
     this.session = null
   }
 
-  async createSession(): Promise<QuerySession> {
-    const saved = await this.postJSON<QueryExecuteResponse>(
-      `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`,
-      {}
-    )
-    if (saved.ok && !saved.ok.error) {
-      if (saved.ok.session) {
-        this.session = saved.ok.session
-      }
-      return saved.ok.session
-    } else {
-      throw saved.err
+  async refresh(): Promise<boolean> {
+    try {
+      const session = await this.createSession()
+      return !!session
+    } catch {
+      return false
     }
   }
 
-  async postJSON<T>(url: string, body?: unknown): Promise<Result<T>> {
-    try {
-      const result = await apiResult<T>(
-        fetch(url, {
-          method: 'POST',
-          body: body ? JSON.stringify(body) : undefined,
-          headers: {
-            'Content-Type': 'application/json',
-            ...this.client.authorizationHeader()
-          },
-          credentials: 'include'
-        })
-      )
+  private async createSession(): Promise<QuerySession> {
+    const url = `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/CreateSession`
+    const { session } = await this.postJSON<QueryExecuteResponse>(url)
+    this.session = session
+    return session
+  }
 
-      return result.err ? { err: result.err } : { ok: unwrap(result.ok) }
-    } catch (e: any) {
-      return { err: e }
+  private async postJSON<T>(url: string, body = {}): Promise<T> {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.client.authorizationHeader()
+      },
+      credentials: 'include'
+    })
+
+    if (response.ok) {
+      const result = await response.json()
+      return result
+    } else {
+      throw new Error(`${response.status} ${response.statusText}`)
     }
   }
 
   async execute(query: string): Promise<ExecutedQuery> {
-    const startTime = new Date().getTime()
-    const saved = await this.postJSON<QueryExecuteResponse>(
-      `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`,
-      {
-        query: query,
-        session: this.session
-      }
-    )
-    const endTime = new Date().getTime()
-    const elapsedTime = endTime - startTime
-    if (saved.ok && !saved.ok.error) {
-      const body = saved.ok
-      const result = body.result
-      const rows = result ? parse(result) : null
-      const headers = result?.fields?.map((f) => f.name)
+    const startTime = Date.now()
+    const url = `${this.client.credentials.mysqlAddress}/psdb.v1alpha1.Database/Execute`
+    const saved = await this.postJSON<QueryExecuteResponse>(url, {
+      query: query,
+      session: this.session
+    })
+    const time = Date.now() - startTime
 
-      this.session = body.session
+    const { result, session, error } = saved
+    if (error) throw new Error(error.message)
 
-      // Transform response into something we understand, this matches our
-      // console's `QueryConsole` response format.
-      return {
-        headers,
-        rows,
-        size: rows.length,
-        statement: query,
-        time: elapsedTime
-      }
-    } else if (saved.ok && saved.ok.error) {
-      return {
-        statement: query,
-        errorMessage: saved.ok.error.message,
-        time: elapsedTime
-      }
-    } else {
-      let errorCode: string | null = null
-      if (saved.err instanceof ClientError) {
-        errorCode = saved.err.body.code
-      }
+    this.session = session
 
-      return {
-        statement: query,
-        errorCode: errorCode,
-        errorMessage: apiMessage(saved.err),
-        time: elapsedTime
-      }
+    const rows = result ? parse(result) : []
+    const headers = result ? result.fields?.map((f) => f.name) : []
+
+    return {
+      headers,
+      rows,
+      size: rows.length,
+      statement: query,
+      time
     }
   }
 }
