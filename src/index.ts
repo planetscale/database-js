@@ -172,7 +172,7 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
   })
 }
 
-function parseColumn(type: string, value: string | null): number | string {
+function parseColumn(type: string, value: string | null): number | string | null {
   if (value === '' || value == null) {
     return value
   }
