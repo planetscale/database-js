@@ -1,5 +1,5 @@
-import { Result, apiResult, unwrap, apiMessage, ClientError } from './api'
-import { utf8Encode } from './text'
+import { Result, apiResult, unwrap, apiMessage, ClientError } from './api.js'
+import { utf8Encode } from './text.js'
 
 export interface Credentials {
   username: string
@@ -63,7 +63,7 @@ export default class Client {
   }
 
   authorizationHeader() {
-    const value = window.btoa(`${this.credentials.username}:${this.credentials.password}`)
+    const value = btoa(`${this.credentials.username}:${this.credentials.password}`)
 
     return {
       Authorization: `Basic ${value}`
@@ -106,7 +106,7 @@ export default class Client {
     }
   }
 
-  async execute(query: string, rawQuery: string): Promise<ExecutedQuery> {
+  async execute(query: string): Promise<ExecutedQuery> {
     try {
       const startTime = new Date().getTime()
       const saved = await this.postJSON<QueryExecuteResponse>(
@@ -132,12 +132,12 @@ export default class Client {
           headers,
           rows,
           size: rows.length,
-          statement: rawQuery,
+          statement: query,
           time: elapsedTime
         }
       } else if (saved.ok && saved.ok.error) {
         return {
-          statement: rawQuery,
+          statement: query,
           errorMessage: saved.ok.error.message,
           time: elapsedTime
         }
@@ -148,7 +148,7 @@ export default class Client {
         }
 
         return {
-          statement: rawQuery,
+          statement: query,
           errorCode: errorCode,
           errorMessage: apiMessage(saved.err),
           time: elapsedTime
@@ -156,7 +156,7 @@ export default class Client {
       }
     } catch (e) {
       return {
-        statement: rawQuery,
+        statement: query,
         errorMessage: 'An unexpected error occurred. Please try again later.'
       }
     }
@@ -193,11 +193,11 @@ function parse(result: QueryResult): any[] {
 }
 
 function decodeRow(row: QueryResultRow) {
-  const values = window.atob(row.values)
+  const values = atob(row.values)
   const rv = []
   let offset = 0
   for (let i = 0; i < row.lengths.length; i++) {
-    const ll = window.parseInt(row.lengths[i], 10)
+    const ll = parseInt(row.lengths[i], 10)
     // If the length is less than zero, it indicates a null value, so we should
     // just call it an empty string and move on.
     if (ll < 0) {
@@ -228,7 +228,7 @@ function parseColumn(type: string, value: string) {
     case 'UINT24':
     case 'UINT32':
     case 'UINT64':
-      return window.parseInt(value, 10)
+      return parseInt(value, 10)
     default:
       return utf8Encode(value)
   }
