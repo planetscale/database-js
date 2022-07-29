@@ -180,7 +180,7 @@ function decodeRow(row: QueryResultRow) {
 
 function parseColumn(type: string, value: string) {
   // For empty strings, just return back a blank string.
-  if (value === '' || null) {
+  if (value === '' || value == null) {
     return ''
   }
 
