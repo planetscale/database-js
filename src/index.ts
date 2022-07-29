@@ -145,22 +145,15 @@ export class Connection {
   }
 }
 
-function parseRow(fields: QueryResultField[], rawRow: QueryResultRow): any {
+function parseRow(fields: QueryResultField[], rawRow: QueryResultRow): Row {
   const row = decodeRow(rawRow)
-  const rv = {}
-
-  for (let i = 0; i < fields.length; i++) {
-    const field = fields[i]
-    const column = row[i]
-    const parsedValue = parseColumn(field.type, column)
-
-    rv[field.name] = parsedValue
-  }
-
-  return rv
+  return fields.reduce((acc, field, ix) => {
+    acc[field.name] = parseColumn(field.type, row[ix])
+    return acc
+  }, {} as Row)
 }
 
-function parse(result: QueryResult): any[] {
+function parse(result: QueryResult): Row[] {
   const fields = result.fields
   const rows = result.rows ?? []
   return rows.map((row) => parseRow(fields, row))
@@ -208,9 +201,11 @@ function parseColumn(type: string, value: string) {
   }
 }
 
+type Row = Record<string, unknown>
+
 export interface ExecutedQuery {
   headers?: string[]
-  rows?: any[]
+  rows?: Row[]
   size?: number
   statement?: string
   rawError?: Error
