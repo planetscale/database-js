@@ -133,7 +133,7 @@ export class Connection {
     this.session = session
 
     const rows = result ? parse(result) : []
-    const headers = result ? result.fields?.map((f) => f.name) : []
+    const headers = result ? result.fields?.map((f) => f.name) ?? [] : []
 
     return {
       headers,
