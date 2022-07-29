@@ -159,29 +159,22 @@ function parse(result: QueryResult): Row[] {
   return rows.map((row) => parseRow(fields, row))
 }
 
-function decodeRow(row: QueryResultRow) {
+function decodeRow(row: QueryResultRow): Array<string | null> {
   const values = atob(row.values)
-  const rv = []
   let offset = 0
-  for (let i = 0; i < row.lengths.length; i++) {
-    const ll = parseInt(row.lengths[i], 10)
-    // If the length is less than zero, it indicates a null value, so we should
-    // just call it an empty string and move on.
-    if (ll < 0) {
-      rv.push('')
-      continue
-    }
-
-    rv.push(values.substring(offset, offset + ll))
-    offset += ll
-  }
-  return rv
+  return row.lengths.map((size) => {
+    const width = parseInt(size, 10)
+    // Negative length indicates a null value.
+    if (width < 0) return null
+    const splice = values.substring(offset, offset + width)
+    offset += width
+    return splice
+  })
 }
 
-function parseColumn(type: string, value: string) {
-  // For empty strings, just return back a blank string.
+function parseColumn(type: string, value: string | null): number | string {
   if (value === '' || value == null) {
-    return ''
+    return value
   }
 
   switch (type) {
