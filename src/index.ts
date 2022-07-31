@@ -100,14 +100,13 @@ export class Connection {
 
   private async postJSON<T>(url: string | URL, body = {}): Promise<T> {
     const auth = btoa(`${this.credentials.username}:${this.credentials.password}`)
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Basic ${auth}`
-      },
-      credentials: 'include'
+      }
     })
 
     if (response.ok) {
