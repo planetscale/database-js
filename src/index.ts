@@ -4,6 +4,7 @@ export interface Credentials {
   username: string
   password: string
   host: string
+  fetch?: (input: RequestInfo, init?: RequestInit) => Promise<Response>
 }
 
 export interface QueryResultRow {
@@ -78,6 +79,9 @@ export class Connection {
   private session: QuerySession | null
 
   constructor(credentials: Credentials) {
+    if (typeof fetch !== 'undefined') {
+      credentials = { fetch, ...credentials }
+    }
     this.credentials = credentials
     this.session = null
   }
@@ -100,7 +104,7 @@ export class Connection {
 
   private async postJSON<T>(url: string | URL, body = {}): Promise<T> {
     const auth = btoa(`${this.credentials.username}:${this.credentials.password}`)
-    const response = await fetch(url.toString(), {
+    const response = await this.credentials.fetch(url.toString(), {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
