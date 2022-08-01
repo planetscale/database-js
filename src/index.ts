@@ -1,6 +1,6 @@
 import { utf8Encode } from './text.js'
 
-export interface Credentials {
+export interface Config {
   username: string
   password: string
   host: string
@@ -55,10 +55,10 @@ export interface QueryResult {
 }
 
 export class Client {
-  credentials: Credentials
+  config: Config
 
-  constructor(credentials: Credentials) {
-    this.credentials = credentials
+  constructor(config: Config) {
+    this.config = config
   }
 
   async execute(query: string): Promise<ExecutedQuery> {
@@ -66,23 +66,23 @@ export class Client {
   }
 
   connection(): Connection {
-    return new Connection(this.credentials)
+    return new Connection(this.config)
   }
 }
 
-export function connect(credentials: Credentials): Connection {
-  return new Connection(credentials)
+export function connect(config: Config): Connection {
+  return new Connection(config)
 }
 
 export class Connection {
-  private credentials: Credentials
+  private config: Config
   private session: QuerySession | null
 
-  constructor(credentials: Credentials) {
+  constructor(config: Config) {
     if (typeof fetch !== 'undefined') {
-      credentials = { fetch, ...credentials }
+      config = { fetch, ...config }
     }
-    this.credentials = credentials
+    this.config = config
     this.session = null
   }
 
@@ -96,15 +96,15 @@ export class Connection {
   }
 
   private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.credentials.host}`)
+    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
     const { session } = await this.postJSON<QueryExecuteResponse>(url)
     this.session = session
     return session
   }
 
   private async postJSON<T>(url: string | URL, body = {}): Promise<T> {
-    const auth = btoa(`${this.credentials.username}:${this.credentials.password}`)
-    const response = await this.credentials.fetch(url.toString(), {
+    const auth = btoa(`${this.config.username}:${this.config.password}`)
+    const response = await this.config.fetch(url.toString(), {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
@@ -123,7 +123,7 @@ export class Connection {
 
   async execute(query: string): Promise<ExecutedQuery> {
     const startTime = Date.now()
-    const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.credentials.host}`)
+    const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
     const saved = await this.postJSON<QueryExecuteResponse>(url, {
       query: query,
       session: this.session
