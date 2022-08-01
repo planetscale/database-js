@@ -1,4 +1,4 @@
-import { connect } from '../dist/index'
+import { connect, ExecutedQuery } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -21,7 +21,83 @@ setGlobalDispatcher(mockAgent)
 const mockPool = mockAgent.get(mockHost)
 
 describe('execute', () => {
-  test('reuses the same session', () => {})
+  test('it properly returns and decodes a response', async () => {
+    const mockSession = {
+      signature: 'V6cmWP8EOlhUQFB1Ca/IsRQoKGDpHmuNhAdn1ObLrCE=',
+      vitessSession: {
+        autocommit: true,
+        options: {
+          includedFields: 'ALL',
+          clientFoundRows: true
+        },
+        foundRows: '1',
+        rowCount: '-1',
+        DDLStrategy: 'direct',
+        SessionUUID: 'dbtDuhIRDpZPzDUkgXIuzg',
+        enableSystemSettings: true
+      }
+    }
+
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        fields: [
+          {
+            name: ':vtg1',
+            type: 'INT64'
+          }
+        ],
+        rows: [
+          {
+            lengths: ['1'],
+            values: 'MQ=='
+          }
+        ]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      rows: [
+        {
+          ':vtg1': 1
+        }
+      ],
+      size: 1,
+      statement: 'SELECT 1 from dual;',
+      time: 1
+    }
+
+    mockPool
+      .intercept({
+        path: EXECUTE_PATH,
+        method: 'POST'
+      })
+      .reply(200, mockResponse)
+
+    const connection = connect(config)
+    const got = await connection.execute('SELECT 1 from dual;')
+    got.time = 1
+
+    expect(got).toEqual(want)
+
+    mockPool
+      .intercept({
+        path: EXECUTE_PATH,
+        method: 'POST'
+      })
+      .reply(200, (opts) => {
+        expect(opts.headers).toContain('authorization')
+        const bodyObj = JSON.parse(opts.body.toString())
+        expect(bodyObj.session).toEqual(mockSession)
+        return mockResponse
+      })
+
+    const got2 = await connection.execute('SELECT 1 from dual;')
+    got2.time = 1
+
+    expect(got2).toEqual(want)
+  })
 })
 
 describe('refresh', () => {
@@ -40,14 +116,13 @@ describe('refresh', () => {
         enableSystemSettings: true
       }
     }
+
     mockPool
       .intercept({
         path: CREATE_SESSION_PATH,
         method: 'POST'
       })
-      .reply(200, (opts) => {
-        return mockSession
-      })
+      .reply(200, mockSession)
 
     const got = await connection.refresh()
 
