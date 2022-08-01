@@ -1,10 +1,14 @@
 import { utf8Encode } from './text.js'
 
+type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
+  body: string
+}
+
 export interface Config {
   username: string
   password: string
   host: string
-  fetch?: (input: RequestInfo, init?: RequestInit) => Promise<Response>
+  fetch?: (input: string, init?: ReqInit) => Promise<Pick<Response, 'ok' | 'json' | 'status' | 'statusText' | 'text'>>
 }
 
 export interface QueryResultRow {
