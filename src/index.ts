@@ -88,8 +88,8 @@ export class Connection {
 
   async refresh(): Promise<boolean> {
     try {
-      const session = await this.createSession()
-      return !!session
+      await this.createSession()
+      return true
     } catch {
       return false
     }
