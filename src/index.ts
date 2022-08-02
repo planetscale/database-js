@@ -1,3 +1,4 @@
+import * as SqlString from 'sqlstring'
 import { utf8Encode } from './text.js'
 
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
@@ -65,8 +66,8 @@ export class Client {
     this.config = config
   }
 
-  async execute(query: string): Promise<ExecutedQuery> {
-    return this.connection().execute(query)
+  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
+    return this.connection().execute(query, args)
   }
 
   connection(): Connection {
@@ -125,9 +126,10 @@ export class Connection {
     }
   }
 
-  async execute(query: string): Promise<ExecutedQuery> {
+  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
     const startTime = Date.now()
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
+    query = SqlString.format(query, args)
     const saved = await this.postJSON<QueryExecuteResponse>(url, {
       query: query,
       session: this.session

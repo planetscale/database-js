@@ -98,6 +98,55 @@ describe('execute', () => {
 
     expect(got2).toEqual(want)
   })
+
+  test('it properly escapes query parameters', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [
+          {
+            name: ':vtg1',
+            type: 'INT64'
+          }
+        ],
+        rows: [
+          {
+            lengths: ['1'],
+            values: 'MQ=='
+          }
+        ]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      rows: [
+        {
+          ':vtg1': 1
+        }
+      ],
+      size: 1,
+      statement: "SELECT 1 from dual where foo = 'bar';",
+      time: 1
+    }
+
+    mockPool
+      .intercept({
+        path: EXECUTE_PATH,
+        method: 'POST'
+      })
+      .reply(200, (opts) => {
+        const bodyObj = JSON.parse(opts.body.toString())
+        expect(bodyObj.query).toEqual(want.statement)
+        return mockResponse
+      })
+
+    const connection = connect(config)
+    const got = await connection.execute('SELECT ? from dual where foo = ?;', [1, 'bar'])
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
 })
 
 describe('refresh', () => {
