@@ -1,4 +1,5 @@
-import * as SqlString from 'sqlstring'
+import SqlString from 'sqlstring'
+
 import { utf8Encode } from './text.js'
 
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {

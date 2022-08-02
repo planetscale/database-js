@@ -48,8 +48,12 @@
     "url": "https://github.com/planetscale/edge-js/issues"
   },
   "homepage": "https://github.com/planetscale/edge-js#readme",
+  "dependencies": {
+    "sqlstring": ">=2.3.3"
+  },
   "devDependencies": {
     "@types/jest": "^28.1.6",
+    "@types/sqlstring": "^2.3.0",
     "@typescript-eslint/eslint-plugin": "^5.31.0",
     "@typescript-eslint/parser": "^5.31.0",
     "eslint": "^8.20.0",
@@ -89,9 +93,5 @@
       "browser": true,
       "node": true
     }
-  },
-  "dependencies": {
-    "@types/sqlstring": "^2.3.0",
-    "sqlstring": "^2.3.3"
   }
 }
