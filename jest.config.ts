@@ -3,9 +3,6 @@
  * https://jestjs.io/docs/configuration
  */
 
-import { pathsToModuleNameMapper } from 'ts-jest'
-import { compilerOptions } from './tsconfig.json'
-
 export default {
   // All imported modules in your tests should be mocked automatically
   // automock: false,
@@ -15,11 +12,9 @@ export default {
 
   // The directory where Jest should store its cached dependency information
   // cacheDirectory: "/private/var/folders/39/wx5hr2ps64d83gpwscpz2jg80000gn/T/jest_dx",
-
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/js-with-ts-esm',
   testEnvironment: 'node',
 
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' }),
   // Automatically clear mock calls, instances, contexts and results before every test
   clearMocks: true
 

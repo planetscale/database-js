@@ -25,6 +25,7 @@
     "prebuild": "npm run clean",
     "build": "tsc",
     "lint": "eslint src/ __tests__/",
+    "pretest": "npm run build",
     "test": "jest"
   },
   "repository": {
@@ -58,16 +59,30 @@
     "prettier": "^2.7.1",
     "ts-jest": "^28.0.7",
     "ts-node": "^10.9.1",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "undici": "^5.8.0"
   },
   "eslintConfig": {
-    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended"
+    ],
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint"],
+    "plugins": [
+      "@typescript-eslint"
+    ],
     "rules": {
-      "prettier/prettier": ["error", {}, { "usePrettierrc": true }],
+      "prettier/prettier": [
+        "error",
+        {},
+        {
+          "usePrettierrc": true
+        }
+      ],
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-empty-function": "off", "@typescript-eslint/ban-ts-comment": "off"
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/ban-ts-comment": "off"
     },
     "root": true,
     "env": {
