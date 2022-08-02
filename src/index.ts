@@ -127,7 +127,7 @@ export class Connection {
   async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
     const startTime = Date.now()
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
-    query = SqlString.format(query, args)
+    query = SqlString.format(query, args, false, 'UTC')
     const saved = await this.postJSON<QueryExecuteResponse>(url, {
       query: query,
       session: this.session
