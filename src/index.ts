@@ -35,10 +35,7 @@ export interface QueryResultField {
   columnType?: string | null
 }
 
-export interface QuerySession {
-  signature: string
-  vitessSession: any
-}
+export type QuerySession = unknown
 
 interface VitessError {
   message: string
