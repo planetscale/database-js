@@ -49,7 +49,7 @@
   },
   "homepage": "https://github.com/planetscale/edge-js#readme",
   "dependencies": {
-    "sqlstring": "^2.3.3"
+    "sqlstring": ">=2.3.3"
   },
   "devDependencies": {
     "@types/jest": "^28.1.6",
