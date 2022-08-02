@@ -89,5 +89,9 @@
       "browser": true,
       "node": true
     }
+  },
+  "dependencies": {
+    "@types/sqlstring": "^2.3.0",
+    "sqlstring": "^2.3.3"
   }
 }
