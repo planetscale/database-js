@@ -124,8 +124,7 @@ export class Connection {
     })
 
     if (response.ok) {
-      const result = await response.json()
-      return result
+      return await response.json()
     } else {
       throw new Error(`${response.status} ${response.statusText}`)
     }
