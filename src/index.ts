@@ -6,6 +6,22 @@ type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
   body: string
 }
 
+type Row = Record<string, unknown>
+
+interface VitessError {
+  message: string
+  code: string
+}
+
+export interface ExecutedQuery {
+  headers: string[]
+  rows: Row[]
+  size: number
+  statement: string
+  error: VitessError | null
+  time: number
+}
+
 export interface Config {
   username: string
   password: string
@@ -13,12 +29,12 @@ export interface Config {
   fetch?: (input: string, init?: ReqInit) => Promise<Pick<Response, 'ok' | 'json' | 'status' | 'statusText' | 'text'>>
 }
 
-export interface QueryResultRow {
+interface QueryResultRow {
   lengths: string[]
   values: string
 }
 
-export interface QueryResultField {
+interface QueryResultField {
   name?: string
   type?: string
   table?: string
@@ -37,20 +53,15 @@ export interface QueryResultField {
   columnType?: string | null
 }
 
-export type QuerySession = unknown
+type QuerySession = unknown
 
-interface VitessError {
-  message: string
-  code: string
-}
-
-export interface QueryExecuteResponse {
+interface QueryExecuteResponse {
   session: QuerySession
   result: QueryResult | null
   error?: VitessError
 }
 
-export interface QueryResult {
+interface QueryResult {
   rowsAffected?: number | null
   insertId?: number | null
   fields?: QueryResultField[] | null
@@ -196,20 +207,11 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'UINT32':
     case 'UINT64':
       return parseInt(value, 10)
+    case 'FLOAT32':
+    case 'FLOAT64':
+    case 'DECIMAL':
+      return parseFloat(value)
     default:
       return utf8Encode(value)
   }
-}
-
-type Row = Record<string, unknown>
-
-export interface ExecutedQuery {
-  headers?: string[]
-  rows?: Row[]
-  size?: number
-  statement?: string
-  rawError?: Error
-  errorCode?: string
-  errorMessage?: string
-  time?: number
 }
