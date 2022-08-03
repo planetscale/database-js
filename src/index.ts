@@ -141,7 +141,6 @@ export class Connection {
     const time = Date.now() - startTime
 
     const { result, session, error } = saved
-    if (error) throw new Error(error.message)
 
     this.session = session
 
@@ -151,6 +150,7 @@ export class Connection {
     return {
       headers,
       rows,
+      error,
       size: rows.length,
       statement: query,
       time
