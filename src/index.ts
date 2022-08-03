@@ -18,7 +18,7 @@ export interface ExecutedQuery {
   rows: Row[]
   size: number
   statement: string
-  error: VitessError | null
+  error?: VitessError | null
   time: number
 }
 
