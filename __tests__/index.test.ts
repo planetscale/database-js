@@ -51,7 +51,9 @@ describe('execute', () => {
       error: null,
       size: 1,
       statement: 'SELECT 1 from dual;',
-      time: 1
+      time: 1,
+      rowsAffected: null,
+      insertId: null
     }
 
     mockPool
@@ -90,6 +92,95 @@ describe('execute', () => {
     expect(got2).toEqual(want)
   })
 
+  test('it properly returns an executed query for a DDL statement', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {}
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const query = 'CREATE TABLE `foo` (bar json);'
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      rowsAffected: null,
+      insertId: null,
+      error: null,
+      size: 0,
+      statement: query,
+      time: 1
+    }
+
+    const connection = connect(config)
+
+    const got = await connection.execute(query)
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
+  test('it properly returns an executed query for an UPDATE statement', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        rowsAffected: '1'
+      }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const query = "UPDATE `foo` SET bar='planetscale'"
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      rowsAffected: 1,
+      insertId: null,
+      error: null,
+      size: 0,
+      statement: query,
+      time: 1
+    }
+
+    const connection = connect(config)
+
+    const got = await connection.execute(query)
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
+  test('it properly returns an executed query for an INSERT statement', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        rowsAffected: '1',
+        insertId: '2'
+      }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const query = "INSERT INTO `foo` (bar) VALUES ('planetscale');"
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      rowsAffected: 1,
+      insertId: '2',
+      error: null,
+      size: 0,
+      statement: query,
+      time: 1
+    }
+
+    const connection = connect(config)
+
+    const got = await connection.execute(query)
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
   test('it properly returns an error from the API', async () => {
     const mockError = {
       message:
@@ -113,6 +204,8 @@ describe('execute', () => {
       headers: [],
       rows: [],
       size: 0,
+      insertId: null,
+      rowsAffected: null,
       error: mockError,
       statement: 'SELECT * from foo;',
       time: 1
@@ -153,6 +246,8 @@ describe('execute', () => {
       ],
       size: 1,
       error: null,
+      insertId: null,
+      rowsAffected: null,
       statement: "SELECT 1 from dual where foo = 'bar';",
       time: 1
     }

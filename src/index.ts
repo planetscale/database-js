@@ -18,6 +18,8 @@ export interface ExecutedQuery {
   rows: Row[]
   size: number
   statement: string
+  insertId: string
+  rowsAffected: number
   error: VitessError | null
   time: number
 }
@@ -62,8 +64,8 @@ interface QueryExecuteResponse {
 }
 
 interface QueryResult {
-  rowsAffected?: number | null
-  insertId?: number | null
+  rowsAffected?: string | null
+  insertId?: string | null
   fields?: QueryResultField[] | null
   rows?: QueryResultRow[]
 }
@@ -141,6 +143,8 @@ export class Connection {
     const time = Date.now() - startTime
 
     const { result, session, error } = saved
+    const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : null
+    const insertId = result?.insertId ?? null
 
     this.session = session
 
@@ -150,6 +154,8 @@ export class Connection {
     return {
       headers,
       rows,
+      rowsAffected,
+      insertId,
       error: error ?? null,
       size: rows.length,
       statement: query,
