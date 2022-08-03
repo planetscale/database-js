@@ -99,6 +99,55 @@ describe('execute', () => {
     expect(got2).toEqual(want)
   })
 
+  test('it properly returns an error', async () => {
+    const mockError = {
+      message:
+        'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
+      code: 'NOT_FOUND'
+    }
+
+    const mockResponse = {
+      session: {
+        signature: '5HEp/jX+n/wwWrpHawlSHuGIXYKTZLPCYh+95XVdYsk=',
+        vitessSession: {
+          autocommit: true,
+          options: {
+            includedFields: 'ALL',
+            clientFoundRows: true
+          },
+          foundRows: '3',
+          rowCount: '-1',
+          DDLStrategy: 'direct',
+          SessionUUID: '6XKXT5XYfiawc1Iq2n2BHg',
+          enableSystemSettings: true
+        }
+      },
+      error: mockError
+    }
+
+    mockPool
+      .intercept({
+        path: EXECUTE_PATH,
+        method: 'POST'
+      })
+      .reply(200, mockResponse)
+
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      size: 0,
+      error: mockError,
+      statement: 'SELECT * from foo;',
+      time: 1
+    }
+
+    const connection = connect(config)
+    const got = await connection.execute('SELECT * from foo;')
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
   test('it properly escapes query parameters', async () => {
     const mockResponse = {
       session: null,
