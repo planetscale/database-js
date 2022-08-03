@@ -18,8 +18,8 @@ export interface ExecutedQuery {
   rows: Row[]
   size: number
   statement: string
-  insertId: string
-  rowsAffected: number
+  insertId: string | null
+  rowsAffected: number | null
   error: VitessError | null
   time: number
 }
