@@ -84,10 +84,6 @@ export class Client {
   }
 }
 
-export function connect(config: Config): Connection {
-  return new Connection(config)
-}
-
 export class Connection {
   private config: Config
   private session: QuerySession | null
@@ -161,6 +157,10 @@ export class Connection {
       time
     }
   }
+}
+
+export function connect(config: Config): Connection {
+  return new Connection(config)
 }
 
 function parseRow(fields: QueryResultField[], rawRow: QueryResultRow): Row {
