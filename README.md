@@ -1,17 +1,17 @@
-# PlanetScale Edge client
+# PlanetScale database client
 
-A JavaScript client for the PlanetScale Edge API.
+A JavaScript client for PlanetScale databases.
 
 ## Installation
 
 ```
-$ npm install @planetscale/edge
+$ npm install @planetscale/database
 ```
 
 ## Usage
 
 ```ts
-import { connect } from '@planetscale/edge'
+import { connect } from '@planetscale/database'
 
 const config = {
   host: 'aws.connect.psdb.cloud',
@@ -29,7 +29,7 @@ console.log(results)
 Use the `Client` connection factory class to create fresh connections for each transaction or web request handler.
 
 ```ts
-import { Client } from '@planetscale/edge'
+import { Client } from '@planetscale/database'
 
 const client = new Client({
   host: 'aws.connect.psdb.cloud',
@@ -49,7 +49,7 @@ Node.js version 18 includes a built-in global `fetch` function. When using an ol
 [1]: https://github.com/nodejs/undici
 
 ```ts
-import { connect } from '@planetscale/edge'
+import { connect } from '@planetscale/database'
 import { fetch } from 'undici'
 
 const config = {
