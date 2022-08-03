@@ -63,6 +63,7 @@ describe('execute', () => {
           ':vtg1': 1
         }
       ],
+      error: null,
       size: 1,
       statement: 'SELECT 1 from dual;',
       time: 1
@@ -175,6 +176,7 @@ describe('execute', () => {
         }
       ],
       size: 1,
+      error: null,
       statement: "SELECT 1 from dual where foo = 'bar';",
       time: 1
     }

@@ -18,7 +18,7 @@ export interface ExecutedQuery {
   rows: Row[]
   size: number
   statement: string
-  error?: VitessError | null
+  error: VitessError | null
   time: number
 }
 
@@ -150,7 +150,7 @@ export class Connection {
     return {
       headers,
       rows,
-      error,
+      error: error ?? null,
       size: rows.length,
       statement: query,
       time
