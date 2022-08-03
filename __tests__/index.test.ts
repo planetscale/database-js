@@ -19,25 +19,10 @@ setGlobalDispatcher(mockAgent)
 
 // Provide the base url to the request
 const mockPool = mockAgent.get(mockHost)
+const mockSession = 42
 
 describe('execute', () => {
-  test('it properly returns and decodes a response', async () => {
-    const mockSession = {
-      signature: 'V6cmWP8EOlhUQFB1Ca/IsRQoKGDpHmuNhAdn1ObLrCE=',
-      vitessSession: {
-        autocommit: true,
-        options: {
-          includedFields: 'ALL',
-          clientFoundRows: true
-        },
-        foundRows: '1',
-        rowCount: '-1',
-        DDLStrategy: 'direct',
-        SessionUUID: 'dbtDuhIRDpZPzDUkgXIuzg',
-        enableSystemSettings: true
-      }
-    }
-
+  test('it properly returns and decodes a select query', async () => {
     const mockResponse = {
       session: mockSession,
       result: {
@@ -63,9 +48,12 @@ describe('execute', () => {
           ':vtg1': 1
         }
       ],
+      error: null,
       size: 1,
       statement: 'SELECT 1 from dual;',
-      time: 1
+      time: 1,
+      rowsAffected: null,
+      insertId: null
     }
 
     mockPool
@@ -73,7 +61,12 @@ describe('execute', () => {
         path: EXECUTE_PATH,
         method: 'POST'
       })
-      .reply(200, mockResponse)
+      .reply(200, (opts) => {
+        expect(opts.headers).toContain('authorization')
+        const bodyObj = JSON.parse(opts.body.toString())
+        expect(bodyObj.session).toEqual(null)
+        return mockResponse
+      })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1 from dual;')
@@ -97,6 +90,132 @@ describe('execute', () => {
     got2.time = 1
 
     expect(got2).toEqual(want)
+  })
+
+  test('it properly returns an executed query for a DDL statement', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {}
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const query = 'CREATE TABLE `foo` (bar json);'
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      rowsAffected: null,
+      insertId: null,
+      error: null,
+      size: 0,
+      statement: query,
+      time: 1
+    }
+
+    const connection = connect(config)
+
+    const got = await connection.execute(query)
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
+  test('it properly returns an executed query for an UPDATE statement', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        rowsAffected: '1'
+      }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const query = "UPDATE `foo` SET bar='planetscale'"
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      rowsAffected: 1,
+      insertId: null,
+      error: null,
+      size: 0,
+      statement: query,
+      time: 1
+    }
+
+    const connection = connect(config)
+
+    const got = await connection.execute(query)
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
+  test('it properly returns an executed query for an INSERT statement', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        rowsAffected: '1',
+        insertId: '2'
+      }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const query = "INSERT INTO `foo` (bar) VALUES ('planetscale');"
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      rowsAffected: 1,
+      insertId: '2',
+      error: null,
+      size: 0,
+      statement: query,
+      time: 1
+    }
+
+    const connection = connect(config)
+
+    const got = await connection.execute(query)
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
+  test('it properly returns an error from the API', async () => {
+    const mockError = {
+      message:
+        'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
+      code: 'NOT_FOUND'
+    }
+
+    const mockResponse = {
+      session: mockSession,
+      error: mockError
+    }
+
+    mockPool
+      .intercept({
+        path: EXECUTE_PATH,
+        method: 'POST'
+      })
+      .reply(200, mockResponse)
+
+    const want: ExecutedQuery = {
+      headers: [],
+      rows: [],
+      size: 0,
+      insertId: null,
+      rowsAffected: null,
+      error: mockError,
+      statement: 'SELECT * from foo;',
+      time: 1
+    }
+
+    const connection = connect(config)
+    const got = await connection.execute('SELECT * from foo;')
+    got.time = 1
+
+    expect(got).toEqual(want)
   })
 
   test('it properly escapes query parameters', async () => {
@@ -126,6 +245,9 @@ describe('execute', () => {
         }
       ],
       size: 1,
+      error: null,
+      insertId: null,
+      rowsAffected: null,
       statement: "SELECT 1 from dual where foo = 'bar';",
       time: 1
     }
@@ -152,26 +274,13 @@ describe('execute', () => {
 describe('refresh', () => {
   test('it sets the session variable when true', async () => {
     const connection = connect(config)
-    const mockSession = {
-      signature: 'testvitesssession',
-      vitessSession: {
-        autocommit: true,
-        options: {
-          includedFields: 'ALL',
-          clientFoundRows: true
-        },
-        DDLStrategy: 'direct',
-        SessionUUID: 'Z2zXmUvMs64GwM9pcaUMhQ',
-        enableSystemSettings: true
-      }
-    }
 
     mockPool
       .intercept({
         path: CREATE_SESSION_PATH,
         method: 'POST'
       })
-      .reply(200, mockSession)
+      .reply(200, JSON.stringify(mockSession))
 
     const got = await connection.refresh()
 

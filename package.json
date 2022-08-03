@@ -26,7 +26,8 @@
     "build": "tsc",
     "lint": "eslint src/ __tests__/",
     "pretest": "npm run build",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
