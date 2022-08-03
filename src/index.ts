@@ -69,7 +69,7 @@ interface QueryResult {
 }
 
 export class Client {
-  config: Config
+  private config: Config
 
   constructor(config: Config) {
     this.config = config
