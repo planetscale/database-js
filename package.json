@@ -1,6 +1,6 @@
 {
   "name": "@planetscale/edge",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A JavaScript client for communicating with PlanetScale Edge API.",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
