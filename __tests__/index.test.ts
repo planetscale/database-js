@@ -19,25 +19,10 @@ setGlobalDispatcher(mockAgent)
 
 // Provide the base url to the request
 const mockPool = mockAgent.get(mockHost)
+const mockSession = 42
 
 describe('execute', () => {
-  test('it properly returns and decodes a response', async () => {
-    const mockSession = {
-      signature: 'V6cmWP8EOlhUQFB1Ca/IsRQoKGDpHmuNhAdn1ObLrCE=',
-      vitessSession: {
-        autocommit: true,
-        options: {
-          includedFields: 'ALL',
-          clientFoundRows: true
-        },
-        foundRows: '1',
-        rowCount: '-1',
-        DDLStrategy: 'direct',
-        SessionUUID: 'dbtDuhIRDpZPzDUkgXIuzg',
-        enableSystemSettings: true
-      }
-    }
-
+  test('it properly returns and decodes a select query', async () => {
     const mockResponse = {
       session: mockSession,
       result: {
@@ -74,7 +59,12 @@ describe('execute', () => {
         path: EXECUTE_PATH,
         method: 'POST'
       })
-      .reply(200, mockResponse)
+      .reply(200, (opts) => {
+        expect(opts.headers).toContain('authorization')
+        const bodyObj = JSON.parse(opts.body.toString())
+        expect(bodyObj.session).toEqual(null)
+        return mockResponse
+      })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1 from dual;')
@@ -100,7 +90,7 @@ describe('execute', () => {
     expect(got2).toEqual(want)
   })
 
-  test('it properly returns an error', async () => {
+  test('it properly returns an error from the API', async () => {
     const mockError = {
       message:
         'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
@@ -108,21 +98,7 @@ describe('execute', () => {
     }
 
     const mockResponse = {
-      session: {
-        signature: '5HEp/jX+n/wwWrpHawlSHuGIXYKTZLPCYh+95XVdYsk=',
-        vitessSession: {
-          autocommit: true,
-          options: {
-            includedFields: 'ALL',
-            clientFoundRows: true
-          },
-          foundRows: '3',
-          rowCount: '-1',
-          DDLStrategy: 'direct',
-          SessionUUID: '6XKXT5XYfiawc1Iq2n2BHg',
-          enableSystemSettings: true
-        }
-      },
+      session: mockSession,
       error: mockError
     }
 
@@ -203,26 +179,13 @@ describe('execute', () => {
 describe('refresh', () => {
   test('it sets the session variable when true', async () => {
     const connection = connect(config)
-    const mockSession = {
-      signature: 'testvitesssession',
-      vitessSession: {
-        autocommit: true,
-        options: {
-          includedFields: 'ALL',
-          clientFoundRows: true
-        },
-        DDLStrategy: 'direct',
-        SessionUUID: 'Z2zXmUvMs64GwM9pcaUMhQ',
-        enableSystemSettings: true
-      }
-    }
 
     mockPool
       .intercept({
         path: CREATE_SESSION_PATH,
         method: 'POST'
       })
-      .reply(200, mockSession)
+      .reply(200, JSON.stringify(mockSession))
 
     const got = await connection.refresh()
 
