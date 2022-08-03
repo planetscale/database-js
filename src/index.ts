@@ -116,7 +116,8 @@ export class Connection {
 
   private async postJSON<T>(url: string | URL, body = {}): Promise<T> {
     const auth = btoa(`${this.config.username}:${this.config.password}`)
-    const response = await this.config.fetch(url.toString(), {
+    const { fetch } = this.config
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: JSON.stringify(body),
       headers: {
