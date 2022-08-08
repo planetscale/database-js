@@ -75,6 +75,7 @@
       "@typescript-eslint"
     ],
     "rules": {
+      "no-control-regex": "off",
       "prettier/prettier": [
         "error",
         {},

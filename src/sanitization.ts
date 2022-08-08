@@ -40,7 +40,7 @@ function quote(text: string): string {
   return `'${escape(text)}'`
 }
 
-const re = /[\0\b\n\r\t\x1a\"\'\\]/g
+const re = /[\0\b\n\r\t\x1a\\"']/g
 
 function escape(text: string): string {
   return text.replace(re, replacement)
