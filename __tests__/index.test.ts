@@ -1,4 +1,5 @@
-import { connect, ExecutedQuery } from '../dist/index'
+import SqlString from 'sqlstring'
+import { connect, format, ExecutedQuery } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -26,28 +27,14 @@ describe('execute', () => {
     const mockResponse = {
       session: mockSession,
       result: {
-        fields: [
-          {
-            name: ':vtg1',
-            type: 'INT64'
-          }
-        ],
-        rows: [
-          {
-            lengths: ['1'],
-            values: 'MQ=='
-          }
-        ]
+        fields: [{ name: ':vtg1', type: 'INT64' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
       }
     }
 
     const want: ExecutedQuery = {
       headers: [':vtg1'],
-      rows: [
-        {
-          ':vtg1': 1
-        }
-      ],
+      rows: [{ ':vtg1': 1 }],
       error: null,
       size: 1,
       statement: 'SELECT 1 from dual;',
@@ -56,17 +43,12 @@ describe('execute', () => {
       insertId: null
     }
 
-    mockPool
-      .intercept({
-        path: EXECUTE_PATH,
-        method: 'POST'
-      })
-      .reply(200, (opts) => {
-        expect(opts.headers).toContain('authorization')
-        const bodyObj = JSON.parse(opts.body.toString())
-        expect(bodyObj.session).toEqual(null)
-        return mockResponse
-      })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(null)
+      return mockResponse
+    })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1 from dual;')
@@ -74,17 +56,12 @@ describe('execute', () => {
 
     expect(got).toEqual(want)
 
-    mockPool
-      .intercept({
-        path: EXECUTE_PATH,
-        method: 'POST'
-      })
-      .reply(200, (opts) => {
-        expect(opts.headers).toContain('authorization')
-        const bodyObj = JSON.parse(opts.body.toString())
-        expect(bodyObj.session).toEqual(mockSession)
-        return mockResponse
-      })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(mockSession)
+      return mockResponse
+    })
 
     const got2 = await connection.execute('SELECT 1 from dual;')
     got2.time = 1
@@ -113,7 +90,6 @@ describe('execute', () => {
     }
 
     const connection = connect(config)
-
     const got = await connection.execute(query)
     got.time = 1
 
@@ -143,7 +119,6 @@ describe('execute', () => {
     }
 
     const connection = connect(config)
-
     const got = await connection.execute(query)
     got.time = 1
 
@@ -174,7 +149,6 @@ describe('execute', () => {
     }
 
     const connection = connect(config)
-
     const got = await connection.execute(query)
     got.time = 1
 
@@ -193,12 +167,7 @@ describe('execute', () => {
       error: mockError
     }
 
-    mockPool
-      .intercept({
-        path: EXECUTE_PATH,
-        method: 'POST'
-      })
-      .reply(200, mockResponse)
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const want: ExecutedQuery = {
       headers: [],
@@ -222,28 +191,14 @@ describe('execute', () => {
     const mockResponse = {
       session: null,
       result: {
-        fields: [
-          {
-            name: ':vtg1',
-            type: 'INT64'
-          }
-        ],
-        rows: [
-          {
-            lengths: ['1'],
-            values: 'MQ=='
-          }
-        ]
+        fields: [{ name: ':vtg1', type: 'INT64' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
       }
     }
 
     const want: ExecutedQuery = {
       headers: [':vtg1'],
-      rows: [
-        {
-          ':vtg1': 1
-        }
-      ],
+      rows: [{ ':vtg1': 1 }],
       size: 1,
       error: null,
       insertId: null,
@@ -252,19 +207,47 @@ describe('execute', () => {
       time: 1
     }
 
-    mockPool
-      .intercept({
-        path: EXECUTE_PATH,
-        method: 'POST'
-      })
-      .reply(200, (opts) => {
-        const bodyObj = JSON.parse(opts.body.toString())
-        expect(bodyObj.query).toEqual(want.statement)
-        return mockResponse
-      })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT ? from dual where foo = ?;', [1, 'bar'])
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
+  test('it uses custom format function', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT64' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      rows: [{ ':vtg1': 1 }],
+      size: 1,
+      error: null,
+      insertId: null,
+      rowsAffected: null,
+      statement: 'select `login`, `email` from `users` where id = 42',
+      time: 1
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+
+    const connection = connect({ ...config, format: SqlString.format })
+    const got = await connection.execute('select ?? from ?? where id = ?', [['login', 'email'], 'users', 42])
     got.time = 1
 
     expect(got).toEqual(want)
@@ -274,16 +257,16 @@ describe('execute', () => {
 describe('refresh', () => {
   test('it sets the session variable when true', async () => {
     const connection = connect(config)
-
-    mockPool
-      .intercept({
-        path: CREATE_SESSION_PATH,
-        method: 'POST'
-      })
-      .reply(200, JSON.stringify(mockSession))
-
+    mockPool.intercept({ path: CREATE_SESSION_PATH, method: 'POST' }).reply(200, JSON.stringify(mockSession))
     const got = await connection.refresh()
-
     expect(got).toEqual(true)
+  })
+})
+
+describe('format', () => {
+  test('exports format function', () => {
+    const query = 'select 1 from user where id=?'
+    const expected = 'select 1 from user where id=42'
+    expect(format(query, [42])).toEqual(expected)
   })
 })

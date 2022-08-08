@@ -1,5 +1,5 @@
-import SqlString from 'sqlstring'
-
+import { format } from './sanitization.js'
+export { format } from './sanitization.js'
 import { utf8Encode } from './text.js'
 
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
@@ -29,6 +29,7 @@ export interface Config {
   password: string
   host: string
   fetch?: (input: string, init?: ReqInit) => Promise<Pick<Response, 'ok' | 'json' | 'status' | 'statusText' | 'text'>>
+  format?: (query: string, args: any) => string
 }
 
 interface QueryResultRow {
@@ -133,14 +134,14 @@ export class Connection {
     }
   }
 
-  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
+  async execute(query: string, args?: any): Promise<ExecutedQuery> {
     const startTime = Date.now()
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
-    query = SqlString.format(query, args, false, 'UTC')
-    const saved = await this.postJSON<QueryExecuteResponse>(url, {
-      query: query,
-      session: this.session
-    })
+
+    const formatter = this.config.format || format
+    const sql = args ? formatter(query, args) : query
+
+    const saved = await this.postJSON<QueryExecuteResponse>(url, { query: sql, session: this.session })
     const time = Date.now() - startTime
 
     const { result, session, error } = saved
@@ -159,7 +160,7 @@ export class Connection {
       insertId,
       error: error ?? null,
       size: rows.length,
-      statement: query,
+      statement: sql,
       time
     }
   }
