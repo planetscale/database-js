@@ -5,3 +5,21 @@
     :why:
     :versions: []
     :when: 2022-08-08 16:54:49.099420000 Z
+- - :permit
+  - MIT
+  - :who:
+    :why:
+    :versions: []
+    :when: 2022-08-08 16:59:15.302666000 Z
+- - :permit
+  - ISC
+  - :who:
+    :why:
+    :versions: []
+    :when: 2022-08-08 16:59:33.287177000 Z
+- - :approve
+  - "@typescript-eslint/parser"
+  - :who:
+    :why:
+    :versions: []
+    :when: 2022-08-08 16:59:41.217130000 Z
