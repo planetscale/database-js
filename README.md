@@ -20,7 +20,7 @@ const config = {
 }
 
 const conn = await connect(config)
-const results = await conn.execute('select 1 from dual')
+const results = await conn.execute('select 1 from dual where 1=?', [1])
 console.log(results)
 ```
 
@@ -61,6 +61,26 @@ const config = {
 
 const conn = await connect(config)
 const results = await conn.execute('select 1 from dual')
+console.log(results)
+```
+
+### Custom query parameter format function
+
+Query replacement parameters identified with `?` are replaced with escaped values. Providing a custom format function overrides the built-in escaping with an external library, like [`sqlstring`](https://github.com/mysqljs/sqlstring).
+
+```ts
+import { connect } from '@planetscale/database'
+import SqlString from 'sqlstring'
+
+const config = {
+  format: SqlString.format,
+  host: 'aws.connect.psdb.cloud',
+  username: '<user>',
+  password: '<password>'
+}
+
+const conn = await connect(config)
+const results = await conn.execute('select 1 from dual where 1=?', [42])
 console.log(results)
 ```
 
