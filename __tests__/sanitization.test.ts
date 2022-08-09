@@ -2,10 +2,9 @@ import { format } from '../src/sanitization'
 
 describe('sanitization', () => {
   describe('format', () => {
-    test('uses null for missing object key', () => {
+    test('does no replacement for missing object key', () => {
       const query = 'select 1 from user where id=:id'
-      const expected = 'select 1 from user where id=null'
-      expect(format(query, {})).toEqual(expected)
+      expect(format(query, {})).toEqual(query)
     })
 
     test('replaces named parameters', () => {
