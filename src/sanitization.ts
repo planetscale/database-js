@@ -1,10 +1,21 @@
 type Stringable = { toString: () => string }
 type Value = null | undefined | number | boolean | string | Array<Value> | Date | Stringable
 
-export function format(query: string, values: Value[]): string {
+export function format(query: string, values: Value[] | Record<string, Value>): string {
+  return Array.isArray(values) ? replacePosition(query, values) : replaceNamed(query, values)
+}
+
+function replacePosition(query: string, values: Value[]): string {
   let index = 0
   return query.replace(/\?/g, (match) => {
     return index < values.length ? sanitize(values[index++]) : match
+  })
+}
+
+function replaceNamed(query: string, values: Record<string, Value>): string {
+  const names = new Set(Object.keys(values))
+  return query.replace(/:(\w+)/g, (match, name) => {
+    return names.has(name) ? sanitize(values[name]) : match
   })
 }
 
