@@ -4,9 +4,6 @@ export function utf8Encode(text: string | null): string {
 
 function binaryToHex(text: string): string {
   const decoder = new TextDecoder('utf-8')
-  const arr = []
-  text.split('').forEach(function (c) {
-    arr.push(c.charCodeAt(0))
-  })
-  return decoder.decode(Uint8Array.from(arr))
+  const bytes = text.split('').map((c) => c.charCodeAt(0))
+  return decoder.decode(Uint8Array.from(bytes))
 }
