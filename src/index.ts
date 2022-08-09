@@ -135,14 +135,14 @@ export class Connection {
   }
 
   async execute(query: string, args?: any): Promise<ExecutedQuery> {
-    const startTime = Date.now()
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
 
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
 
+    const start = Date.now()
     const saved = await this.postJSON<QueryExecuteResponse>(url, { query: sql, session: this.session })
-    const time = Date.now() - startTime
+    const time = Date.now() - start
 
     const { result, session, error } = saved
     const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : null
