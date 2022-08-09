@@ -10,8 +10,16 @@ describe('text', () => {
       expect(utf8Encode('\\a')).toEqual('\\a')
     })
 
-    test('encodes blank string properly', () => {
+    test('encodes empty string', () => {
       expect(utf8Encode('')).toEqual('')
+    })
+
+    test('encodes null value', () => {
+      expect(utf8Encode(null)).toEqual('')
+    })
+
+    test('encodes undefined value', () => {
+      expect(utf8Encode(undefined)).toEqual('')
     })
   })
 })
