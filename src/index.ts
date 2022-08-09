@@ -1,6 +1,7 @@
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
-import { utf8Encode } from './text.js'
+export { hex } from './text.js'
+import { decode } from './text.js'
 
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
   body: string
@@ -13,8 +14,11 @@ interface VitessError {
   code: string
 }
 
+type Types = Record<string, string>
+
 export interface ExecutedQuery {
   headers: string[]
+  types: Types
   rows: Row[]
   size: number
   statement: string
@@ -135,14 +139,14 @@ export class Connection {
   }
 
   async execute(query: string, args?: any): Promise<ExecutedQuery> {
-    const startTime = Date.now()
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
 
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
 
+    const start = Date.now()
     const saved = await this.postJSON<QueryExecuteResponse>(url, { query: sql, session: this.session })
-    const time = Date.now() - startTime
+    const time = Date.now() - start
 
     const { result, session, error } = saved
     const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : null
@@ -153,8 +157,12 @@ export class Connection {
     const rows = result ? parse(result) : []
     const headers = result ? result.fields?.map((f) => f.name) ?? [] : []
 
+    const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
+    const types = result ? result.fields?.reduce<Types>(typeByName, {}) ?? {} : {}
+
     return {
       headers,
+      types,
       rows,
       rowsAffected,
       insertId,
@@ -218,7 +226,12 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'FLOAT64':
     case 'DECIMAL':
       return parseFloat(value)
+    case 'BLOB':
+    case 'BIT':
+    case 'VARBINARY':
+    case 'BINARY':
+      return value
     default:
-      return utf8Encode(value)
+      return decode(value)
   }
 }

@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, ExecutedQuery } from '../dist/index'
+import { connect, format, hex, ExecutedQuery } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -34,6 +34,7 @@ describe('execute', () => {
 
     const want: ExecutedQuery = {
       headers: [':vtg1'],
+      types: { ':vtg1': 'INT64' },
       rows: [{ ':vtg1': 1 }],
       error: null,
       size: 1,
@@ -80,6 +81,7 @@ describe('execute', () => {
     const query = 'CREATE TABLE `foo` (bar json);'
     const want: ExecutedQuery = {
       headers: [],
+      types: {},
       rows: [],
       rowsAffected: null,
       insertId: null,
@@ -109,6 +111,7 @@ describe('execute', () => {
     const query = "UPDATE `foo` SET bar='planetscale'"
     const want: ExecutedQuery = {
       headers: [],
+      types: {},
       rows: [],
       rowsAffected: 1,
       insertId: null,
@@ -139,6 +142,7 @@ describe('execute', () => {
     const query = "INSERT INTO `foo` (bar) VALUES ('planetscale');"
     const want: ExecutedQuery = {
       headers: [],
+      types: {},
       rows: [],
       rowsAffected: 1,
       insertId: '2',
@@ -171,6 +175,7 @@ describe('execute', () => {
 
     const want: ExecutedQuery = {
       headers: [],
+      types: {},
       rows: [],
       size: 0,
       insertId: null,
@@ -199,6 +204,7 @@ describe('execute', () => {
     const want: ExecutedQuery = {
       headers: [':vtg1'],
       rows: [{ ':vtg1': 1 }],
+      types: { ':vtg1': 'INT64' },
       size: 1,
       error: null,
       insertId: null,
@@ -231,6 +237,7 @@ describe('execute', () => {
 
     const want: ExecutedQuery = {
       headers: [':vtg1'],
+      types: { ':vtg1': 'INT64' },
       rows: [{ ':vtg1': 1 }],
       size: 1,
       error: null,
@@ -268,5 +275,11 @@ describe('format', () => {
     const query = 'select 1 from user where id=?'
     const expected = 'select 1 from user where id=42'
     expect(format(query, [42])).toEqual(expected)
+  })
+})
+
+describe('hex', () => {
+  test('exports hex function', () => {
+    expect(hex('\0')).toEqual('0x00')
   })
 })
