@@ -1,5 +1,6 @@
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
+export { hex } from './text.js'
 import { decode } from './text.js'
 
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {

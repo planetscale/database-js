@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, ExecutedQuery } from '../dist/index'
+import { connect, format, hex, ExecutedQuery } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -268,5 +268,11 @@ describe('format', () => {
     const query = 'select 1 from user where id=?'
     const expected = 'select 1 from user where id=42'
     expect(format(query, [42])).toEqual(expected)
+  })
+})
+
+describe('hex', () => {
+  test('exports hex function', () => {
+    expect(hex('\0')).toEqual('0x00')
   })
 })
