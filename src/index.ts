@@ -13,8 +13,11 @@ interface VitessError {
   code: string
 }
 
+type Types = Record<string, string>
+
 export interface ExecutedQuery {
   headers: string[]
+  types: Types
   rows: Row[]
   size: number
   statement: string
@@ -153,8 +156,12 @@ export class Connection {
     const rows = result ? parse(result) : []
     const headers = result ? result.fields?.map((f) => f.name) ?? [] : []
 
+    const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
+    const types = result ? result.fields?.reduce<Types>(typeByName, {}) ?? {} : {}
+
     return {
       headers,
+      types,
       rows,
       rowsAffected,
       insertId,
