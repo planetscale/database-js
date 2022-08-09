@@ -218,6 +218,11 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'FLOAT64':
     case 'DECIMAL':
       return parseFloat(value)
+    case 'BLOB':
+    case 'BIT':
+    case 'VARBINARY':
+    case 'BINARY':
+      return value
     default:
       return decode(value)
   }
