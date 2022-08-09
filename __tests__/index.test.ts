@@ -259,6 +259,42 @@ describe('execute', () => {
 
     expect(got).toEqual(want)
   })
+
+  test('parses json column values', async () => {
+    const document = JSON.stringify({ answer: 42 })
+
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: 'document', type: 'JSON' }],
+        rows: [{ lengths: [String(document.length)], values: btoa(document) }]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: ['document'],
+      types: { document: 'JSON' },
+      rows: [{ document: JSON.parse(document) }],
+      size: 1,
+      error: null,
+      insertId: null,
+      rowsAffected: null,
+      statement: 'select document from documents',
+      time: 1
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+
+    const connection = connect(config)
+    const got = await connection.execute('select document from documents')
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
 })
 
 describe('refresh', () => {
