@@ -1,6 +1,6 @@
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
-import { utf8Encode } from './text.js'
+import { decode } from './text.js'
 
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
   body: string
@@ -219,6 +219,6 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'DECIMAL':
       return parseFloat(value)
     default:
-      return utf8Encode(value)
+      return decode(value)
   }
 }
