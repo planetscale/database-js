@@ -84,6 +84,12 @@ const results = await conn.execute('select 1 from dual where 1=?', [42])
 console.log(results)
 ```
 
+Named replacement parameters are supported with a colon prefix.
+
+```ts
+const results = await conn.execute('select 1 from dual where 1=:id', { id: 42 })
+```
+
 ## Development
 
 ```

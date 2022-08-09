@@ -2,7 +2,25 @@ import { format } from '../src/sanitization'
 
 describe('sanitization', () => {
   describe('format', () => {
-    test('does nothing with empty values', () => {
+    test('uses null for missing object key', () => {
+      const query = 'select 1 from user where id=:id'
+      const expected = 'select 1 from user where id=null'
+      expect(format(query, {})).toEqual(expected)
+    })
+
+    test('replaces named parameters', () => {
+      const query = 'select 1 from user where state in (:state) and deleted_at=:deleted_at'
+      const expected = "select 1 from user where state in ('active', 'inactive') and deleted_at=true"
+      expect(format(query, { state: ['active', 'inactive'], deleted_at: true })).toEqual(expected)
+    })
+
+    test('replaces duplicate named parameters', () => {
+      const query = 'select 1 from user where id=:id or actor_id=:id'
+      const expected = 'select 1 from user where id=42 or actor_id=42'
+      expect(format(query, { id: 42 })).toEqual(expected)
+    })
+
+    test('does nothing with empty values list', () => {
       const query = 'select 1 from user where id=?'
       expect(format(query, [])).toEqual(query)
     })
