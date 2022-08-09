@@ -231,6 +231,8 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'VARBINARY':
     case 'BINARY':
       return value
+    case 'JSON':
+      return JSON.parse(decode(value))
     default:
       return decode(value)
   }
