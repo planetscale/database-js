@@ -29,9 +29,10 @@ export interface ExecutedQuery {
 }
 
 export interface Config {
-  username: string
-  password: string
-  host: string
+  url?: string
+  username?: string
+  password?: string
+  host?: string
   fetch?: (input: string, init?: ReqInit) => Promise<Pick<Response, 'ok' | 'json' | 'status' | 'statusText' | 'text'>>
   format?: (query: string, args: any) => string
 }
@@ -52,11 +53,8 @@ interface QueryResultField {
   orgName?: string | null
 
   columnLength?: number | null
-
   charset?: number | null
-
   flags?: number | null
-
   columnType?: string | null
 }
 
@@ -96,11 +94,19 @@ export class Connection {
   private session: QuerySession | null
 
   constructor(config: Config) {
-    if (typeof fetch !== 'undefined') {
-      config = { fetch, ...config }
-    }
-    this.config = config
     this.session = null
+    this.config = { ...config }
+
+    if (typeof fetch !== 'undefined') {
+      this.config.fetch ||= fetch
+    }
+
+    if (config.url) {
+      const url = new URL(config.url)
+      this.config.username = url.username
+      this.config.password = url.password
+      this.config.host = url.hostname
+    }
   }
 
   async refresh(): Promise<boolean> {

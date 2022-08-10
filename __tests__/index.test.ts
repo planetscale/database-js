@@ -22,6 +22,24 @@ setGlobalDispatcher(mockAgent)
 const mockPool = mockAgent.get(mockHost)
 const mockSession = 42
 
+describe('config', () => {
+  test('parses database url', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: { fields: [], rows: [] }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      return mockResponse
+    })
+
+    const connection = connect({ fetch, url: 'mysql://someuser:password@example.com' })
+    const got = await connection.execute('SELECT 1 from dual;')
+    expect(got).toBeDefined()
+  })
+})
+
 describe('execute', () => {
   test('it properly returns and decodes a select query', async () => {
     const mockResponse = {

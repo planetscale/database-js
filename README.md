@@ -24,6 +24,20 @@ const results = await conn.execute('select 1 from dual where 1=?', [1])
 console.log(results)
 ```
 
+### Database URL
+
+A single database URL value can be used to configure the `host`, `username`, and `password` values.
+
+```ts
+import { connect } from '@planetscale/database'
+
+const config = {
+  url: process.env['DATABASE_URL'] || 'mysql://user:pass@aws.connect.psdb.cloud'
+}
+
+const conn = await connect(config)
+```
+
 ### Connection factory
 
 Use the `Client` connection factory class to create fresh connections for each transaction or web request handler.
