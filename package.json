@@ -27,7 +27,8 @@
     "lint": "eslint src/ __tests__/",
     "pretest": "npm run build",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "postpublish": "npm publish --ignore-scripts --@planetscale:registry='https://npm.pkg.github.com'"
   },
   "repository": {
     "type": "git",
