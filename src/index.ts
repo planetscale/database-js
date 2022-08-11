@@ -14,6 +14,17 @@ interface VitessError {
   code: string
 }
 
+export class DatabaseError extends Error {
+  body: VitessError
+  status: number
+  constructor(message: string, status: number, body: VitessError) {
+    super(message)
+    this.status = status
+    this.name = 'DatabaseError'
+    this.body = body
+  }
+}
+
 type Types = Record<string, string>
 
 export interface ExecutedQuery {
@@ -140,7 +151,17 @@ export class Connection {
     if (response.ok) {
       return await response.json()
     } else {
-      throw new Error(`${response.status} ${response.statusText}`)
+      let error = null
+      try {
+        const e = (await response.json()).error
+        error = new DatabaseError(e.message, response.status, e)
+      } catch {
+        error = new DatabaseError(response.statusText, response.status, {
+          code: 'internal',
+          message: response.statusText
+        })
+      }
+      throw error
     }
   }
 

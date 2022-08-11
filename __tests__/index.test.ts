@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, hex, ExecutedQuery } from '../dist/index'
+import { connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -175,6 +175,40 @@ describe('execute', () => {
     got.time = 1
 
     expect(got).toEqual(want)
+  })
+
+  test('it properly returns network errors when unauthenticated', async () => {
+    const mockError = { code: 'unauthenticated', message: 'invalid auth credentials' }
+
+    const mockResponse = {
+      session: mockSession,
+      error: mockError
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(401, mockResponse)
+
+    const connection = connect(config)
+    try {
+      await connection.execute('SELECT * from foo;')
+    } catch (err) {
+      expect(err).toEqual(new DatabaseError(mockError.message, 401, mockError))
+    }
+  })
+
+  test('it properly returns network errors when not json', async () => {
+    const mockError = {
+      code: 'internal',
+      message: 'Internal Server Error'
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(500, mockError)
+
+    const connection = connect(config)
+    try {
+      await connection.execute('SELECT * from foo;')
+    } catch (err) {
+      expect(err).toEqual(new DatabaseError(mockError.message, 500, mockError))
+    }
   })
 
   test('it properly returns an error from the API', async () => {
