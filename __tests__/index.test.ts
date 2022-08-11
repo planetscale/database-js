@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, hex, ExecutedQuery } from '../dist/index'
+import { connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -175,6 +175,26 @@ describe('execute', () => {
     got.time = 1
 
     expect(got).toEqual(want)
+  })
+
+  test('it properly returns network errors', async () => {
+    const mockError = {
+      message:
+        'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
+      code: 'NOT_FOUND'
+    }
+
+    const mockResponse = {
+      session: mockSession,
+      error: mockError
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(401, mockResponse)
+
+    const connection = connect(config)
+    expect(async () => {
+      return await connection.execute('SELECT * from foo;')
+    }).rejects.toThrowError(new DatabaseError('Unauthorized', 401, mockError))
   })
 
   test('it properly returns an error from the API', async () => {
