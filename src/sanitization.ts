@@ -13,10 +13,13 @@ function replacePosition(query: string, values: Value[]): string {
 }
 
 function replaceNamed(query: string, values: Record<string, Value>): string {
-  const names = new Set(Object.keys(values))
   return query.replace(/:(\w+)/g, (match, name) => {
-    return names.has(name) ? sanitize(values[name]) : match
+    return hasOwn(values, name) ? sanitize(values[name]) : match
   })
+}
+
+function hasOwn(obj: unknown, name: string): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, name)
 }
 
 function sanitize(value: Value): string {
