@@ -196,7 +196,10 @@ describe('execute', () => {
   })
 
   test('it properly returns network errors when not json', async () => {
-    const mockError = 'Internal Server Error'
+    const mockError = {
+      code: 'internal',
+      message: 'Internal Server Error'
+    }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(500, mockError)
 
@@ -204,7 +207,7 @@ describe('execute', () => {
     try {
       await connection.execute('SELECT * from foo;')
     } catch (err) {
-      expect(err).toEqual(new DatabaseError(mockError, 500, mockError))
+      expect(err).toEqual(new DatabaseError(mockError.message, 500, mockError))
     }
   })
 

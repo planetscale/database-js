@@ -15,9 +15,9 @@ interface VitessError {
 }
 
 export class DatabaseError extends Error {
-  body: unknown
+  body: VitessError
   status: number
-  constructor(message: string, status: number, body: unknown) {
+  constructor(message: string, status: number, body: VitessError) {
     super(message)
     this.status = status
     this.name = 'DatabaseError'
@@ -151,16 +151,21 @@ export class Connection {
     if (response.ok) {
       return await response.json()
     } else {
-      let errorBody: string | VitessError = await response.text()
+      const errorBody: string = await response.text()
       let errorMessage: string = response.statusText
-      try {
-        errorBody = JSON.parse(errorBody).error as VitessError
-        errorMessage = errorBody.message
-      } catch (err) {
-        // Do nothing, fallback to the original values.
+      let errorJSON: VitessError = {
+        code: 'internal',
+        message: response.statusText
       }
 
-      throw new DatabaseError(errorMessage, response.status, errorBody)
+      try {
+        errorJSON = JSON.parse(errorBody).error
+        errorMessage = errorJSON.message
+      } catch (err) {
+        // Do nothing and fallback to original values.
+      }
+
+      throw new DatabaseError(errorMessage, response.status, errorJSON)
     }
   }
 
