@@ -248,11 +248,16 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'UINT24':
     case 'UINT32':
     case 'UINT64':
+    case 'YEAR':
       return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
     case 'DECIMAL':
       return parseFloat(value)
+    case 'DATE':
+    case 'TIME':
+    case 'DATETIME':
+    case 'TIMESTAMP':
     case 'BLOB':
     case 'BIT':
     case 'VARBINARY':

@@ -1,7 +1,7 @@
+const decoder = new TextDecoder('utf-8')
+
 export function decode(text: string | null): string {
-  if (!text) return ''
-  const decoder = new TextDecoder('utf-8')
-  return decoder.decode(Uint8Array.from(bytes(text)))
+  return text ? decoder.decode(Uint8Array.from(bytes(text))) : ''
 }
 
 export function hex(text: string): string {
