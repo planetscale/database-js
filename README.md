@@ -51,7 +51,7 @@ const client = new Client({
   password: '<password>'
 })
 
-const conn = await client.connection()
+const conn = client.connection()
 const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
