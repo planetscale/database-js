@@ -177,12 +177,8 @@ describe('execute', () => {
     expect(got).toEqual(want)
   })
 
-  test('it properly returns network errors', async () => {
-    const mockError = {
-      message:
-        'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
-      code: 'NOT_FOUND'
-    }
+  test('it properly returns network errors when unauthenticated', async () => {
+    const mockError = { code: 'unauthenticated', message: 'invalid auth credentials' }
 
     const mockResponse = {
       session: mockSession,
@@ -192,9 +188,24 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(401, mockResponse)
 
     const connection = connect(config)
-    expect(async () => {
-      return await connection.execute('SELECT * from foo;')
-    }).rejects.toThrowError(new DatabaseError('Unauthorized', 401, mockError))
+    try {
+      await connection.execute('SELECT * from foo;')
+    } catch (err) {
+      expect(err).toEqual(new DatabaseError(mockError.message, 401, mockError))
+    }
+  })
+
+  test('it properly returns network errors when not json', async () => {
+    const mockError = 'Internal Server Error'
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(500, mockError)
+
+    const connection = connect(config)
+    try {
+      await connection.execute('SELECT * from foo;')
+    } catch (err) {
+      expect(err).toEqual(new DatabaseError(mockError, 500, mockError))
+    }
   })
 
   test('it properly returns an error from the API', async () => {
