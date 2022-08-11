@@ -120,9 +120,8 @@ export class Connection {
     }
   }
 
-  async refresh(): Promise<boolean> {
+  async refresh(): Promise<void> {
     await this.createSession()
-    return true
   }
 
   private async createSession(): Promise<QuerySession> {
