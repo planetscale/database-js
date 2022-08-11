@@ -151,21 +151,17 @@ export class Connection {
     if (response.ok) {
       return await response.json()
     } else {
-      const errorBody: string = await response.text()
-      let errorMessage: string = response.statusText
-      let errorJSON: VitessError = {
-        code: 'internal',
-        message: response.statusText
-      }
-
+      let error = null
       try {
-        errorJSON = JSON.parse(errorBody).error
-        errorMessage = errorJSON.message
-      } catch (err) {
-        // Do nothing and fallback to original values.
+        const e = (await response.json()).error
+        error = new DatabaseError(e.message, response.status, e)
+      } catch {
+        error = new DatabaseError(response.statusText, response.status, {
+          code: 'internal',
+          message: response.statusText
+        })
       }
-
-      throw new DatabaseError(errorMessage, response.status, errorJSON)
+      throw error
     }
   }
 
