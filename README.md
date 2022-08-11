@@ -19,7 +19,7 @@ const config = {
   password: '<password>'
 }
 
-const conn = await connect(config)
+const conn = connect(config)
 const results = await conn.execute('select 1 from dual where 1=?', [1])
 console.log(results)
 ```
@@ -35,7 +35,7 @@ const config = {
   url: process.env['DATABASE_URL'] || 'mysql://user:pass@aws.connect.psdb.cloud'
 }
 
-const conn = await connect(config)
+const conn = connect(config)
 ```
 
 ### Connection factory
@@ -73,7 +73,7 @@ const config = {
   password: '<password>'
 }
 
-const conn = await connect(config)
+const conn = connect(config)
 const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
@@ -93,7 +93,7 @@ const config = {
   password: '<password>'
 }
 
-const conn = await connect(config)
+const conn = connect(config)
 const results = await conn.execute('select 1 from dual where 1=?', [42])
 console.log(results)
 ```
