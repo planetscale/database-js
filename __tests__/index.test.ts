@@ -353,8 +353,7 @@ describe('refresh', () => {
   test('it sets the session variable when true', async () => {
     const connection = connect(config)
     mockPool.intercept({ path: CREATE_SESSION_PATH, method: 'POST' }).reply(200, JSON.stringify(mockSession))
-    const got = await connection.refresh()
-    expect(got).toEqual(true)
+    await connection.refresh()
   })
 })
 
