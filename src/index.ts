@@ -39,6 +39,8 @@ export interface ExecutedQuery {
   time: number
 }
 
+type Cast = typeof cast
+
 export interface Config {
   url?: string
   username?: string
@@ -46,6 +48,7 @@ export interface Config {
   host?: string
   fetch?: (input: string, init?: ReqInit) => Promise<Pick<Response, 'ok' | 'json' | 'status' | 'statusText' | 'text'>>
   format?: (query: string, args: any) => string
+  cast?: Cast
 }
 
 interface QueryResultRow {
@@ -176,7 +179,7 @@ export class Connection {
 
     this.session = session
 
-    const rows = result ? parse(result) : []
+    const rows = result ? parse(result, this.config.cast || cast) : []
     const headers = result ? result.fields?.map((f) => f.name) ?? [] : []
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
@@ -200,18 +203,18 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseRow(fields: QueryResultField[], rawRow: QueryResultRow): Row {
+function parseRow(fields: QueryResultField[], rawRow: QueryResultRow, cast: Cast): Row {
   const row = decodeRow(rawRow)
   return fields.reduce((acc, field, ix) => {
-    acc[field.name] = parseColumn(field.type, row[ix])
+    acc[field.name] = cast(field.type, row[ix])
     return acc
   }, {} as Row)
 }
 
-function parse(result: QueryResult): Row[] {
+function parse(result: QueryResult, cast: Cast): Row[] {
   const fields = result.fields
   const rows = result.rows ?? []
-  return rows.map((row) => parseRow(fields, row))
+  return rows.map((row) => parseRow(fields, row, cast))
 }
 
 function decodeRow(row: QueryResultRow): Array<string | null> {
@@ -227,7 +230,7 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
   })
 }
 
-function parseColumn(type: string, value: string | null): number | string | null {
+export function cast(type: string, value: string | null): number | string | null {
   if (value === '' || value == null) {
     return value
   }
@@ -237,18 +240,18 @@ function parseColumn(type: string, value: string | null): number | string | null
     case 'INT16':
     case 'INT24':
     case 'INT32':
-    case 'INT64':
     case 'UINT8':
     case 'UINT16':
     case 'UINT24':
     case 'UINT32':
-    case 'UINT64':
     case 'YEAR':
       return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
     case 'DECIMAL':
       return parseFloat(value)
+    case 'INT64':
+    case 'UINT64':
     case 'DATE':
     case 'TIME':
     case 'DATETIME':
