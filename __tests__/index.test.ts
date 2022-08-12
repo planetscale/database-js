@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
+import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
 const mockHost = 'https://example.com'
@@ -312,6 +312,41 @@ describe('execute', () => {
     expect(got).toEqual(want)
   })
 
+  test('uses custom cast function', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT64' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      types: { ':vtg1': 'INT64' },
+      rows: [{ ':vtg1': BigInt(1) }],
+      size: 1,
+      error: null,
+      insertId: null,
+      rowsAffected: null,
+      statement: 'select 1 from dual',
+      time: 1
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+
+    const inflate = (type, value) => (type === 'INT64' ? BigInt(value) : value)
+    const connection = connect({ ...config, cast: inflate })
+    const got = await connection.execute('select 1 from dual')
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
   test('parses json column values', async () => {
     const document = JSON.stringify({ answer: 42 })
 
@@ -368,5 +403,11 @@ describe('format', () => {
 describe('hex', () => {
   test('exports hex function', () => {
     expect(hex('\0')).toEqual('0x00')
+  })
+})
+
+describe('cast', () => {
+  test('casts int to number', () => {
+    expect(cast('INT8', '12')).toEqual(12)
   })
 })

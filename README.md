@@ -104,6 +104,30 @@ Named replacement parameters are supported with a colon prefix.
 const results = await conn.execute('select 1 from dual where 1=:id', { id: 42 })
 ```
 
+### Custom type casting function
+
+Column values are converted to their corresponding JavaScript data types. This can be customized by providing a `cast` function.
+
+```ts
+import { connect, cast } from '@planetscale/database'
+
+function inflate(type, value) {
+  if (type === 'UINT64') {
+    return BigInt(value)
+  }
+  return cast(type, value)
+}
+
+const config = {
+  cast: inflate,
+  host: 'aws.connect.psdb.cloud',
+  username: '<user>',
+  password: '<password>'
+}
+
+const conn = connect(config)
+```
+
 ## Development
 
 ```
