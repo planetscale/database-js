@@ -45,14 +45,14 @@ describe('execute', () => {
     const mockResponse = {
       session: mockSession,
       result: {
-        fields: [{ name: ':vtg1', type: 'INT64' }],
+        fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       }
     }
 
     const want: ExecutedQuery = {
       headers: [':vtg1'],
-      types: { ':vtg1': 'INT64' },
+      types: { ':vtg1': 'INT32' },
       rows: [{ ':vtg1': 1 }],
       error: null,
       size: 1,
@@ -248,7 +248,7 @@ describe('execute', () => {
     const mockResponse = {
       session: null,
       result: {
-        fields: [{ name: ':vtg1', type: 'INT64' }],
+        fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       }
     }
@@ -256,7 +256,7 @@ describe('execute', () => {
     const want: ExecutedQuery = {
       headers: [':vtg1'],
       rows: [{ ':vtg1': 1 }],
-      types: { ':vtg1': 'INT64' },
+      types: { ':vtg1': 'INT32' },
       size: 1,
       error: null,
       insertId: null,
@@ -282,14 +282,14 @@ describe('execute', () => {
     const mockResponse = {
       session: null,
       result: {
-        fields: [{ name: ':vtg1', type: 'INT64' }],
+        fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       }
     }
 
     const want: ExecutedQuery = {
       headers: [':vtg1'],
-      types: { ':vtg1': 'INT64' },
+      types: { ':vtg1': 'INT32' },
       rows: [{ ':vtg1': 1 }],
       size: 1,
       error: null,

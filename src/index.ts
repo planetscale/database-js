@@ -240,18 +240,18 @@ export function cast(type: string, value: string | null): number | string | null
     case 'INT16':
     case 'INT24':
     case 'INT32':
-    case 'INT64':
     case 'UINT8':
     case 'UINT16':
     case 'UINT24':
     case 'UINT32':
-    case 'UINT64':
     case 'YEAR':
       return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
     case 'DECIMAL':
       return parseFloat(value)
+    case 'INT64':
+    case 'UINT64':
     case 'DATE':
     case 'TIME':
     case 'DATETIME':
