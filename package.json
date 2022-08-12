@@ -1,6 +1,6 @@
 {
   "name": "@planetscale/database",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A JavaScript client for PlanetScale databases.",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
