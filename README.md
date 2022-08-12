@@ -112,7 +112,7 @@ Column values are converted to their corresponding JavaScript data types. This c
 import { connect, cast } from '@planetscale/database'
 
 function inflate(type, value) {
-  if (type === 'UINT64') {
+  if (type === 'INT64' || type === 'UINT64') {
     return BigInt(value)
   }
   return cast(type, value)
