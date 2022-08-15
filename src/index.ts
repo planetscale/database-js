@@ -127,13 +127,6 @@ export class Connection {
     await this.createSession()
   }
 
-  private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
-    const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
-    this.session = session
-    return session
-  }
-
   async execute(query: string, args?: any): Promise<ExecutedQuery> {
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
 
@@ -167,6 +160,13 @@ export class Connection {
       statement: sql,
       time
     }
+  }
+
+  private async createSession(): Promise<QuerySession> {
+    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
+    const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
+    this.session = session
+    return session
   }
 }
 
