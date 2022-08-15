@@ -129,38 +129,9 @@ export class Connection {
 
   private async createSession(): Promise<QuerySession> {
     const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
-    const { session } = await this.postJSON<QueryExecuteResponse>(url)
+    const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
     this.session = session
     return session
-  }
-
-  private async postJSON<T>(url: string | URL, body = {}): Promise<T> {
-    const auth = btoa(`${this.config.username}:${this.config.password}`)
-    const { fetch } = this.config
-    const response = await fetch(url.toString(), {
-      method: 'POST',
-      body: JSON.stringify(body),
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${auth}`
-      }
-    })
-
-    if (response.ok) {
-      return await response.json()
-    } else {
-      let error = null
-      try {
-        const e = (await response.json()).error
-        error = new DatabaseError(e.message, response.status, e)
-      } catch {
-        error = new DatabaseError(response.statusText, response.status, {
-          code: 'internal',
-          message: response.statusText
-        })
-      }
-      throw error
-    }
   }
 
   async execute(query: string, args?: any): Promise<ExecutedQuery> {
@@ -170,7 +141,7 @@ export class Connection {
     const sql = args ? formatter(query, args) : query
 
     const start = Date.now()
-    const saved = await this.postJSON<QueryExecuteResponse>(url, { query: sql, session: this.session })
+    const saved = await postJSON<QueryExecuteResponse>(this.config, url, { query: sql, session: this.session })
     const time = Date.now() - start
 
     const { result, session, error } = saved
@@ -196,6 +167,35 @@ export class Connection {
       statement: sql,
       time
     }
+  }
+}
+
+async function postJSON<T>(config: Config, url: string | URL, body = {}): Promise<T> {
+  const auth = btoa(`${config.username}:${config.password}`)
+  const { fetch } = config
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Basic ${auth}`
+    }
+  })
+
+  if (response.ok) {
+    return await response.json()
+  } else {
+    let error = null
+    try {
+      const e = (await response.json()).error
+      error = new DatabaseError(e.message, response.status, e)
+    } catch {
+      error = new DatabaseError(response.statusText, response.status, {
+        code: 'internal',
+        message: response.statusText
+      })
+    }
+    throw error
   }
 }
 
