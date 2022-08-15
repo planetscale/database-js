@@ -39,7 +39,7 @@ export interface ExecutedQuery {
   time: number
 }
 
-type Cast = typeof cast
+export type Cast = typeof cast
 
 export interface Config {
   url?: string
