@@ -1,6 +1,6 @@
-# database-js
+# PlanetScale Serverless Driver for JavaScript
 
-`database-js` is a Fetch API compatible PlanetScale database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions.
+A Fetch API compatible PlanetScale database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions
 
 ## Installation
 
