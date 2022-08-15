@@ -1,11 +1,11 @@
-# PlanetScale database client
+# database-js
 
-A JavaScript client for PlanetScale databases.
+`database-js` is a Fetch API compatible PlanetScale database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions.
 
 ## Installation
 
 ```
-$ npm install @planetscale/database
+npm install @planetscale/database
 ```
 
 ## Usage
