@@ -80,7 +80,14 @@ console.log(results)
 
 ### Custom query parameter format function
 
-Query replacement parameters identified with `?` are replaced with escaped values. Providing a custom format function overrides the built-in escaping with an external library, like [`sqlstring`](https://github.com/mysqljs/sqlstring).
+Query replacement parameters identified with `?` are replaced with escaped values. Named replacement parameters are supported with a colon prefix.
+
+```ts
+const results1 = await conn.execute('select 1 from dual where 1=?', [42])
+const results2 = await conn.execute('select 1 from dual where 1=:id', { id: 42 })
+```
+
+Providing a custom format function overrides the built-in escaping with an external library, like [`sqlstring`](https://github.com/mysqljs/sqlstring).
 
 ```ts
 import { connect } from '@planetscale/database'
@@ -96,12 +103,6 @@ const config = {
 const conn = connect(config)
 const results = await conn.execute('select 1 from dual where 1=?', [42])
 console.log(results)
-```
-
-Named replacement parameters are supported with a colon prefix.
-
-```ts
-const results = await conn.execute('select 1 from dual where 1=:id', { id: 42 })
 ```
 
 ### Custom type casting function
