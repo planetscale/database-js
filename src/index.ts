@@ -248,8 +248,8 @@ export function cast(type: string, value: string | null): number | string | null
       return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
-    case 'DECIMAL':
       return parseFloat(value)
+    case 'DECIMAL':
     case 'INT64':
     case 'UINT64':
     case 'DATE':
