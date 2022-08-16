@@ -58,9 +58,9 @@ interface QueryResultRow {
   values: string
 }
 
-interface QueryResultField {
-  name?: string
-  type?: string
+export interface Field {
+  name: string
+  type: string
   table?: string
 
   // Only populated for included fields
@@ -85,7 +85,7 @@ interface QueryExecuteResponse {
 interface QueryResult {
   rowsAffected?: string | null
   insertId?: string | null
-  fields?: QueryResultField[] | null
+  fields?: Field[] | null
   rows?: QueryResultRow[]
 }
 
@@ -206,10 +206,10 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseRow(fields: QueryResultField[], rawRow: QueryResultRow, cast: Cast): Row {
+function parseRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
   const row = decodeRow(rawRow)
   return fields.reduce((acc, field, ix) => {
-    acc[field.name] = cast(field.type, row[ix])
+    acc[field.name] = cast(field, row[ix])
     return acc
   }, {} as Row)
 }
@@ -233,12 +233,12 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
   })
 }
 
-export function cast(type: string, value: string | null): number | string | null {
+export function cast(field: Field, value: string | null): number | string | null {
   if (value === '' || value == null) {
     return value
   }
 
-  switch (type) {
+  switch (field.type) {
     case 'INT8':
     case 'INT16':
     case 'INT24':
@@ -251,8 +251,8 @@ export function cast(type: string, value: string | null): number | string | null
       return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
-    case 'DECIMAL':
       return parseFloat(value)
+    case 'DECIMAL':
     case 'INT64':
     case 'UINT64':
     case 'DATE':
