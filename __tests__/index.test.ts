@@ -1,6 +1,7 @@
 import SqlString from 'sqlstring'
 import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
+import packageJSON from '../package.json'
 
 const mockHost = 'https://example.com'
 
@@ -31,6 +32,7 @@ describe('config', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
       expect(opts.headers['authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      expect(opts.headers['user-agent']).toEqual(`database-js/${packageJSON.version}`)
       return mockResponse
     })
 
