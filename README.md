@@ -32,7 +32,7 @@ A single database URL value can be used to configure the `host`, `username`, and
 import { connect } from '@planetscale/database'
 
 const config = {
-  url: process.env['DATABASE_URL'] || 'mysql://user:pass@aws.connect.psdb.cloud'
+  url: process.env['DATABASE_URL'] || 'mysql://user:pass@host'
 }
 
 const conn = connect(config)
@@ -46,7 +46,7 @@ Use the `Client` connection factory class to create fresh connections for each t
 import { Client } from '@planetscale/database'
 
 const client = new Client({
-  host: 'aws.connect.psdb.cloud',
+  host: '<host>',
   username: '<user>',
   password: '<password>'
 })
@@ -68,7 +68,7 @@ import { fetch } from 'undici'
 
 const config = {
   fetch,
-  host: 'aws.connect.psdb.cloud',
+  host: '<host>',
   username: '<user>',
   password: '<password>'
 }
@@ -95,7 +95,7 @@ import SqlString from 'sqlstring'
 
 const config = {
   format: SqlString.format,
-  host: 'aws.connect.psdb.cloud',
+  host: '<host>',
   username: '<user>',
   password: '<password>'
 }
@@ -121,7 +121,7 @@ function inflate(type, value) {
 
 const config = {
   cast: inflate,
-  host: 'aws.connect.psdb.cloud',
+  host: '<host>',
   username: '<user>',
   password: '<password>'
 }
