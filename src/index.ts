@@ -3,6 +3,8 @@ export { format } from './sanitization.js'
 export { hex } from './text.js'
 import { decode } from './text.js'
 
+const PACKAGE_VERSION = '0.5.0'
+
 type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
   body: string
 }
@@ -178,6 +180,7 @@ async function postJSON<T>(config: Config, url: string | URL, body = {}): Promis
     body: JSON.stringify(body),
     headers: {
       'Content-Type': 'application/json',
+      'User-Agent': `database-js/${PACKAGE_VERSION}`,
       Authorization: `Basic ${auth}`
     }
   })
