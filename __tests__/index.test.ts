@@ -339,7 +339,7 @@ describe('execute', () => {
       return mockResponse
     })
 
-    const inflate = (type, value) => (type === 'INT64' ? BigInt(value) : value)
+    const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual')
     got.time = 1
@@ -408,6 +408,6 @@ describe('hex', () => {
 
 describe('cast', () => {
   test('casts int to number', () => {
-    expect(cast('INT8', '12')).toEqual(12)
+    expect(cast({ name: 'test', type: 'INT8' }, '12')).toEqual(12)
   })
 })

@@ -112,11 +112,11 @@ Column values are converted to their corresponding JavaScript data types. This c
 ```ts
 import { connect, cast } from '@planetscale/database'
 
-function inflate(type, value) {
-  if (type === 'INT64' || type === 'UINT64') {
+function inflate(field, value) {
+  if (field.type === 'INT64' || field.type === 'UINT64') {
     return BigInt(value)
   }
-  return cast(type, value)
+  return cast(field, value)
 }
 
 const config = {
