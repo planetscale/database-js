@@ -27,6 +27,7 @@
     "lint": "eslint src/ __tests__/",
     "pretest": "npm run build",
     "test": "jest",
+    "version": "echo \"export const Version = '$npm_package_version'\" > src/version.ts && git add src/version.ts && npm run build",
     "prepublishOnly": "npm run build",
     "postpublish": "npm publish --ignore-scripts --@planetscale:registry='https://npm.pkg.github.com'"
   },
