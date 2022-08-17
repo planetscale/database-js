@@ -1,7 +1,7 @@
 {
   "name": "@planetscale/database",
   "version": "1.0.0",
-  "description": "A JavaScript client for PlanetScale databases.",
+  "description": "A Fetch API-compatible PlanetScale database driver",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
   "files": [
