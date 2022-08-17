@@ -14,7 +14,7 @@ npm install @planetscale/database
 import { connect } from '@planetscale/database'
 
 const config = {
-  host: 'aws.connect.psdb.cloud',
+  host: '<host>',
   username: '<user>',
   password: '<password>'
 }
