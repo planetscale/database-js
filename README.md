@@ -73,10 +73,6 @@ const config = {
 
 const conn = connect(config)
 const results = await conn.transaction((tx) => {
-  const statement = `INSERT INTO slotted_counters(record_type, record_id, slot, count)
-    VALUES (branch_count, database_id, RAND() * 100, 1)
-    ON DUPLICATE KEY UPDATE count = count + 1;`
-
   return Promise.all([
     tx.execute('INSERT INTO branches (database_id, name) VALUES (?, ?), [42, "planetscale"]'),
     tx.execute('INSERT INTO slotted_counters(record_type, record_id, slot, count) VALUES (branch_count, database_id, RAND() * 100, 1) ON DUPLICATE KEY UPDATE count = count + 1')
