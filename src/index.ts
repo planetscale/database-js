@@ -8,7 +8,7 @@ type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
   body: string
 }
 
-type Row = Record<string, unknown>
+type Row = Record<string, any>
 
 interface VitessError {
   message: string
@@ -232,7 +232,7 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
   })
 }
 
-export function cast(field: Field, value: string | null): number | string | null {
+export function cast(field: Field, value: string | null): any {
   if (value === '' || value == null) {
     return value
   }
