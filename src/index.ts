@@ -105,6 +105,10 @@ export class Client {
     this.config = config
   }
 
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+    return this.connection().transaction(fn)
+  }
+
   async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
     return this.connection().execute(query, args)
   }
