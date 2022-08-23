@@ -4,10 +4,6 @@ export { hex } from './text.js'
 import { decode } from './text.js'
 import { Version } from './version.js'
 
-type ReqInit = Pick<RequestInit, 'method' | 'headers'> & {
-  body: string
-}
-
 type Row = Record<string, any>
 
 interface VitessError {
@@ -40,6 +36,20 @@ export interface ExecutedQuery {
   time: number
 }
 
+type Req = {
+  method: string
+  headers: Record<string, string>
+  body: string
+}
+
+type Res = {
+  ok: boolean
+  status: number
+  statusText: string
+  json(): Promise<any>
+  text(): Promise<string>
+}
+
 export type Cast = typeof cast
 
 export interface Config {
@@ -47,7 +57,7 @@ export interface Config {
   username?: string
   password?: string
   host?: string
-  fetch?: (input: string, init?: ReqInit) => Promise<Pick<Response, 'ok' | 'json' | 'status' | 'statusText' | 'text'>>
+  fetch?: (input: string, init?: Req) => Promise<Res>
   format?: (query: string, args: any) => string
   cast?: Cast
 }
