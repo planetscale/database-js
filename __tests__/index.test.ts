@@ -42,6 +42,80 @@ describe('config', () => {
   })
 })
 
+describe('transaction', () => {
+  test('it runs a transaction successfully', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT32' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      }
+    }
+
+    let numRequests = 0
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
+      numRequests++
+      return mockResponse
+    })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
+      numRequests++
+      return mockResponse
+    })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
+      numRequests++
+      return mockResponse
+    })
+
+    const connection = connect(config)
+    await connection.transaction((tx) => {
+      return tx.execute('SELECT 1 from dual;')
+    })
+
+    expect(numRequests).toEqual(3)
+  })
+
+  test('it rolls back when an error occurs', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT32' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      }
+    }
+    const mockError = { code: 'unauthenticated', message: 'invalid auth credentials' }
+
+    let numRequests = 0
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
+      numRequests++
+      return mockResponse
+    })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
+      numRequests++
+      return mockResponse
+    })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(401, () => {
+      numRequests++
+      return mockError
+    })
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
+      numRequests++
+      return mockResponse
+    })
+
+    const connection = connect(config)
+    try {
+      await connection.transaction((tx) => {
+        return Promise.all([tx.execute('SELECT 1'), tx.execute('SELECT 1')])
+      })
+    } catch (err) {
+      expect(numRequests).toEqual(4)
+      expect(err).toEqual(new DatabaseError('Unauthorized', 401, mockError))
+    }
+  })
+})
+
 describe('execute', () => {
   test('it properly returns and decodes a select query', async () => {
     const mockResponse = {

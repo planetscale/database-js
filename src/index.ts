@@ -114,6 +114,8 @@ export class Client {
   }
 }
 
+type Transaction = Connection
+
 export class Connection {
   private config: Config
   private session: QuerySession | null
@@ -131,6 +133,21 @@ export class Connection {
       this.config.username = url.username
       this.config.password = url.password
       this.config.host = url.hostname
+    }
+  }
+
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+    const tx = new Connection(this.config)
+
+    try {
+      await tx.execute('BEGIN')
+      const res = await fn(tx)
+      await tx.execute('COMMIT')
+
+      return res
+    } catch (err) {
+      await tx.execute('ROLLBACK')
+      throw err
     }
   }
 
