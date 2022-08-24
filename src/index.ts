@@ -118,7 +118,19 @@ export class Client {
   }
 }
 
-type Transaction = Connection
+export type Transaction = Tx
+
+class Tx {
+  private conn: Connection
+
+  constructor(conn: Connection) {
+    this.conn = conn
+  }
+
+  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
+    return this.conn.execute(query, args)
+  }
+}
 
 export class Connection {
   private config: Config
@@ -141,7 +153,8 @@ export class Connection {
   }
 
   async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    const tx = new Connection(this.config)
+    const conn = new Connection(this.config) // Create a new connection specifically for the transaction
+    const tx = new Tx(conn)
 
     try {
       await tx.execute('BEGIN')
