@@ -57,6 +57,7 @@ export interface Config {
   username?: string
   password?: string
   host?: string
+  insecure?: boolean
   fetch?: (input: string, init?: Req) => Promise<Res>
   format?: (query: string, args: any) => string
   cast?: Cast
@@ -115,6 +116,8 @@ export class Client {
 }
 
 export class Connection {
+  private static service = 'psdb.v1alpha1.Database'
+
   private config: Config
   private session: QuerySession | null
 
@@ -139,7 +142,7 @@ export class Connection {
   }
 
   async execute(query: string, args?: any): Promise<ExecutedQuery> {
-    const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
+    const url = this.getURL('Execute')
 
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
@@ -173,8 +176,13 @@ export class Connection {
     }
   }
 
+  private getURL(method: string): URL {
+    const proto = this.config.insecure ? 'http' : 'https'
+    return new URL(`${Connection.service}/${method}`, `${proto}://${this.config.host}`)
+  }
+
   private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
+    const url = this.getURL('CreateSession')
     const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
     this.session = session
     return session
