@@ -56,6 +56,30 @@ const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
 
+### Transactions
+
+Use the `transaction` function to safely perform database transactions. If any unhandled errors are thrown during execution of the transaction, the transaction will be rolled back.
+
+The following example is based on [the Slotted Counter Pattern](https://planetscale.com/blog/the-slotted-counter-pattern).
+
+```ts
+import { connect } from '@planetscale/database'
+
+const config = {
+  host: '<host>',
+  username: '<user>',
+  password: '<password>'
+}
+
+const conn = connect(config)
+const results = await conn.transaction(async (tx) => {
+  const whenBranch = await tx.execute('INSERT INTO branches (database_id, name) VALUES (?, ?)', [42, "planetscale"])
+  const whenCounter = await tx.execute('INSERT INTO slotted_counters(record_type, record_id, slot, count) VALUES (?, ?, RAND() * 100, 1) ON DUPLICATE KEY UPDATE count = count + 1', ['branch_count', 42])
+  return [whenBranch, whenCounter]
+})
+console.log(results)
+```
+
 ### Custom fetch function
 
 Node.js version 18 includes a built-in global `fetch` function. When using an older version of Node.js, you can provide a custom fetch function implementation. We recommend the [`undici`][1] package on which Node's built-in fetch is based.

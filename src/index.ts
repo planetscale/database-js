@@ -105,12 +105,30 @@ export class Client {
     this.config = config
   }
 
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+    return this.connection().transaction(fn)
+  }
+
   async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
     return this.connection().execute(query, args)
   }
 
   connection(): Connection {
     return new Connection(this.config)
+  }
+}
+
+export type Transaction = Tx
+
+class Tx {
+  private conn: Connection
+
+  constructor(conn: Connection) {
+    this.conn = conn
+  }
+
+  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
+    return this.conn.execute(query, args)
   }
 }
 
@@ -131,6 +149,22 @@ export class Connection {
       this.config.username = url.username
       this.config.password = url.password
       this.config.host = url.hostname
+    }
+  }
+
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
+    const conn = new Connection(this.config) // Create a new connection specifically for the transaction
+    const tx = new Tx(conn)
+
+    try {
+      await tx.execute('BEGIN')
+      const res = await fn(tx)
+      await tx.execute('COMMIT')
+
+      return res
+    } catch (err) {
+      await tx.execute('ROLLBACK')
+      throw err
     }
   }
 
