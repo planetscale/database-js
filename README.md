@@ -74,7 +74,7 @@ const config = {
 const conn = connect(config)
 const results = await conn.transaction(async (tx) => {
   const whenBranch = await tx.execute('INSERT INTO branches (database_id, name) VALUES (?, ?)', [42, "planetscale"])
-  const whenCounter = await tx.execute('INSERT INTO slotted_counters(record_type, record_id, slot, count) VALUES (?, ?, RAND() * 100, 1) ON DUPLICATE KEY UPDATE count = count + 1', [branch_count, database_id])
+  const whenCounter = await tx.execute('INSERT INTO slotted_counters(record_type, record_id, slot, count) VALUES (?, ?, RAND() * 100, 1) ON DUPLICATE KEY UPDATE count = count + 1', ['branch_count', 42])
   return [whenBranch, whenCounter]
 })
 console.log(results)
