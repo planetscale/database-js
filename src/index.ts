@@ -32,7 +32,6 @@ export interface ExecutedQuery {
   statement: string
   insertId: string | null
   rowsAffected: number | null
-  error: VitessError | null
   time: number
 }
 
@@ -183,6 +182,10 @@ export class Connection {
     const time = Date.now() - start
 
     const { result, session, error } = saved
+    if (error) {
+      throw new DatabaseError(error.message, 400, error)
+    }
+
     const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : null
     const insertId = result?.insertId ?? null
 
@@ -200,7 +203,6 @@ export class Connection {
       rows,
       rowsAffected,
       insertId,
-      error: error ?? null,
       size: rows.length,
       statement: sql,
       time
