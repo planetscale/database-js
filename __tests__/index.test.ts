@@ -130,7 +130,6 @@ describe('execute', () => {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT32' },
       rows: [{ ':vtg1': 1 }],
-      error: null,
       size: 1,
       statement: 'SELECT 1 from dual;',
       time: 1,
@@ -179,7 +178,6 @@ describe('execute', () => {
       rows: [],
       rowsAffected: null,
       insertId: null,
-      error: null,
       size: 0,
       statement: query,
       time: 1
@@ -209,7 +207,6 @@ describe('execute', () => {
       rows: [],
       rowsAffected: 1,
       insertId: null,
-      error: null,
       size: 0,
       statement: query,
       time: 1
@@ -240,7 +237,6 @@ describe('execute', () => {
       rows: [],
       rowsAffected: 1,
       insertId: '2',
-      error: null,
       size: 0,
       statement: query,
       time: 1
@@ -287,7 +283,7 @@ describe('execute', () => {
     }
   })
 
-  test('it properly returns an error from the API', async () => {
+  test('it throws errors returned as a database error', async () => {
     const mockError = {
       message:
         'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
@@ -301,23 +297,12 @@ describe('execute', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
-    const want: ExecutedQuery = {
-      headers: [],
-      types: {},
-      rows: [],
-      size: 0,
-      insertId: null,
-      rowsAffected: null,
-      error: mockError,
-      statement: 'SELECT * from foo;',
-      time: 1
-    }
-
     const connection = connect(config)
-    const got = await connection.execute('SELECT * from foo;')
-    got.time = 1
-
-    expect(got).toEqual(want)
+    try {
+      await connection.execute('SELECT * from foo;')
+    } catch (err) {
+      expect(err).toEqual(new DatabaseError(mockError.message, 400, mockError))
+    }
   })
 
   test('it properly escapes query parameters', async () => {
@@ -334,7 +319,6 @@ describe('execute', () => {
       rows: [{ ':vtg1': 1 }],
       types: { ':vtg1': 'INT32' },
       size: 1,
-      error: null,
       insertId: null,
       rowsAffected: null,
       statement: "SELECT 1 from dual where foo = 'bar';",
@@ -368,7 +352,6 @@ describe('execute', () => {
       types: { ':vtg1': 'INT32' },
       rows: [{ ':vtg1': 1 }],
       size: 1,
-      error: null,
       insertId: null,
       rowsAffected: null,
       statement: 'select `login`, `email` from `users` where id = 42',
@@ -402,7 +385,6 @@ describe('execute', () => {
       types: { ':vtg1': 'INT64' },
       rows: [{ ':vtg1': BigInt(1) }],
       size: 1,
-      error: null,
       insertId: null,
       rowsAffected: null,
       statement: 'select 1 from dual',
@@ -439,7 +421,6 @@ describe('execute', () => {
       types: { document: 'JSON' },
       rows: [{ document: JSON.parse(document) }],
       size: 1,
-      error: null,
       insertId: null,
       rowsAffected: null,
       statement: 'select document from documents',
