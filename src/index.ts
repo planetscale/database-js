@@ -4,7 +4,7 @@ export { hex } from './text.js'
 import { decode } from './text.js'
 import { Version } from './version.js'
 
-type Row = Record<string, any>
+type Row = Record<string, any> | any[]
 
 interface VitessError {
   message: string
@@ -28,6 +28,7 @@ export interface ExecutedQuery {
   headers: string[]
   types: Types
   rows: Row[]
+  fields: Field[]
   size: number
   statement: string
   insertId: string | null
@@ -97,6 +98,18 @@ interface QueryResult {
   rows?: QueryResultRow[]
 }
 
+type ExecuteAs = 'array' | 'object'
+
+type ExecuteOptions = {
+  as?: ExecuteAs
+}
+
+type ExecuteArgs = object | any[] | null
+
+const defaultExecuteOptions: ExecuteOptions = {
+  as: 'object'
+}
+
 export class Client {
   private config: Config
 
@@ -108,8 +121,12 @@ export class Client {
     return this.connection().transaction(fn)
   }
 
-  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
-    return this.connection().execute(query, args)
+  async execute(
+    query: string,
+    args: ExecuteArgs = null,
+    options: ExecuteOptions = defaultExecuteOptions
+  ): Promise<ExecutedQuery> {
+    return this.connection().execute(query, args, options)
   }
 
   connection(): Connection {
@@ -126,8 +143,12 @@ class Tx {
     this.conn = conn
   }
 
-  async execute(query: string, args?: object | any[]): Promise<ExecutedQuery> {
-    return this.conn.execute(query, args)
+  async execute(
+    query: string,
+    args: ExecuteArgs = null,
+    options: ExecuteOptions = defaultExecuteOptions
+  ): Promise<ExecutedQuery> {
+    return this.conn.execute(query, args, options)
   }
 }
 
@@ -171,7 +192,11 @@ export class Connection {
     await this.createSession()
   }
 
-  async execute(query: string, args?: any): Promise<ExecutedQuery> {
+  async execute(
+    query: string,
+    args: ExecuteArgs = null,
+    options: ExecuteOptions = defaultExecuteOptions
+  ): Promise<ExecutedQuery> {
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
 
     const formatter = this.config.format || format
@@ -191,15 +216,17 @@ export class Connection {
 
     this.session = session
 
-    const rows = result ? parse(result, this.config.cast || cast) : []
-    const headers = result ? result.fields?.map((f) => f.name) ?? [] : []
+    const fields = result?.fields ?? []
+    const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
+    const headers = fields.map((f) => f.name)
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
-    const types = result ? result.fields?.reduce<Types>(typeByName, {}) ?? {} : {}
+    const types = fields.reduce<Types>(typeByName, {})
 
     return {
       headers,
       types,
+      fields,
       rows,
       rowsAffected,
       insertId,
@@ -251,18 +278,29 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
+function parseArrayRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
   const row = decodeRow(rawRow)
+
+  return fields.map((field, ix) => {
+    return cast(field, row[ix])
+  })
+}
+
+function parseObjectRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
+  const row = decodeRow(rawRow)
+
   return fields.reduce((acc, field, ix) => {
     acc[field.name] = cast(field, row[ix])
     return acc
   }, {} as Row)
 }
 
-function parse(result: QueryResult, cast: Cast): Row[] {
+function parse(result: QueryResult, cast: Cast, returnAs: ExecuteAs): Row[] {
   const fields = result.fields
   const rows = result.rows ?? []
-  return rows.map((row) => parseRow(fields, row, cast))
+  return rows.map((row) =>
+    returnAs === 'array' ? parseArrayRow(fields, row, cast) : parseObjectRow(fields, row, cast)
+  )
 }
 
 function decodeRow(row: QueryResultRow): Array<string | null> {
