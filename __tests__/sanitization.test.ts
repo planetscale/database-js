@@ -57,7 +57,7 @@ describe('sanitization', () => {
     test('formats date values', () => {
       const ts = Date.UTC(2022, 1, 8, 13, 15, 45)
       const query = 'select 1 from user where created_at > ?'
-      const expected = "select 1 from user where created_at > '2022-02-08T13:15:45.000Z'"
+      const expected = "select 1 from user where created_at > '2022-02-08T13:15:45.000'"
       expect(format(query, [new Date(ts)])).toEqual(expected)
     })
 
