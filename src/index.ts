@@ -101,7 +101,7 @@ interface QueryResult {
 type ExecuteAs = 'array' | 'object'
 
 type ExecuteOptions = {
-  as: ExecuteAs
+  as?: ExecuteAs
 }
 
 type ExecuteArgs = object | Array<unknown> | null
@@ -217,7 +217,7 @@ export class Connection {
     this.session = session
 
     const fields = result?.fields ?? []
-    const rows = result ? parse(result, this.config.cast || cast, options.as) : []
+    const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
