@@ -153,6 +153,19 @@ const config = {
 const conn = connect(config)
 ```
 
+### Row return values
+
+Rows can be returned as an object or an array of column values by passing an `as` option to `execute`.
+
+```ts
+const query = 'select 1 as one, 2 as two where 1=?'
+const objects = conn.execute(query, [1], { as: 'object' })
+// objects.rows => [{one: '1', two: '2'}]
+
+const arrays = conn.execute(query, [1], { as: 'array' })
+// arrays.rows => [['1', '2']]
+```
+
 ## Development
 
 ```
