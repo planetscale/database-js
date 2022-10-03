@@ -163,6 +163,40 @@ describe('execute', () => {
     expect(got2).toEqual(want)
   })
 
+  test('it properly returns and decodes a select query with rows as array when designated', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT32' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      types: { ':vtg1': 'INT32' },
+      rows: [[1]],
+      size: 1,
+      statement: 'SELECT 1 from dual;',
+      time: 1,
+      rowsAffected: null,
+      insertId: null
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(null)
+      return mockResponse
+    })
+
+    const connection = connect(config)
+    const got = await connection.execute('SELECT 1 from dual;', null, { as: 'array' })
+    got.time = 1
+
+    expect(got).toEqual(want)
+  })
+
   test('it properly returns an executed query for a DDL statement', async () => {
     const mockResponse = {
       session: mockSession,
