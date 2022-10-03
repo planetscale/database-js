@@ -278,15 +278,15 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseRow(fields: Field[], rawRow: QueryResultRow, cast: Cast, returnAs: ExecuteAs): Row {
+function parseArrayRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
   const row = decodeRow(rawRow)
+  return fields.map((field, ix) => {
+    return cast(field, row[ix])
+  })
+}
 
-  if (returnAs === 'array') {
-    return fields.reduce((acc, field, ix) => {
-      acc.push(cast(field, row[ix]))
-      return acc
-    }, [] as Row)
-  }
+function parseObjectRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
+  const row = decodeRow(rawRow)
 
   return fields.reduce((acc, field, ix) => {
     acc[field.name] = cast(field, row[ix])
@@ -297,7 +297,9 @@ function parseRow(fields: Field[], rawRow: QueryResultRow, cast: Cast, returnAs:
 function parse(result: QueryResult, cast: Cast, returnAs: ExecuteAs): Row[] {
   const fields = result.fields
   const rows = result.rows ?? []
-  return rows.map((row) => parseRow(fields, row, cast, returnAs))
+  return rows.map((row) =>
+    returnAs === 'array' ? parseArrayRow(fields, row, cast) : parseObjectRow(fields, row, cast)
+  )
 }
 
 function decodeRow(row: QueryResultRow): Array<string | null> {
