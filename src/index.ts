@@ -104,7 +104,7 @@ type ExecuteOptions = {
   as?: ExecuteAs
 }
 
-type ExecuteArgs = object | Array<unknown> | null
+type ExecuteArgs = object | any[] | null
 
 const defaultExecuteOptions: ExecuteOptions = {
   as: 'object'
