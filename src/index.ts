@@ -280,6 +280,7 @@ export function connect(config: Config): Connection {
 
 function parseArrayRow(fields: Field[], rawRow: QueryResultRow, cast: Cast): Row {
   const row = decodeRow(rawRow)
+
   return fields.map((field, ix) => {
     return cast(field, row[ix])
   })
