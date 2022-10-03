@@ -28,6 +28,7 @@ export interface ExecutedQuery {
   headers: string[]
   types: Types
   rows: Row[]
+  fields: Field[]
   size: number
   statement: string
   insertId: string | null
@@ -215,15 +216,17 @@ export class Connection {
 
     this.session = session
 
+    const fields = result?.fields ?? []
     const rows = result ? parse(result, this.config.cast || cast, options.as) : []
-    const headers = result ? result.fields?.map((f) => f.name) ?? [] : []
+    const headers = fields.map((f) => f.name)
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
-    const types = result ? result.fields?.reduce<Types>(typeByName, {}) ?? {} : {}
+    const types = fields.reduce<Types>(typeByName, {})
 
     return {
       headers,
       types,
+      fields,
       rows,
       rowsAffected,
       insertId,
