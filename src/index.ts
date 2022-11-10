@@ -64,12 +64,12 @@ export interface Config {
 
 interface QueryResultRow {
   lengths: string[]
-  values: string
+  values?: string
 }
 
 export interface Field {
   name: string
-  type: string
+  type?: string
   table?: string
 
   // Only populated for included fields
@@ -217,6 +217,13 @@ export class Connection {
     this.session = session
 
     const fields = result?.fields ?? []
+    // ensure each field has a type assigned,
+    // the only case it would be omitted is in the case of
+    // NULL due to the protojson spec. NULL in our enum
+    // is 0, and empty fields are omitted from the JSON response,
+    // so we should backfill an expected type.
+    fields.forEach((f) => { f.type = f.type || 'NULL' })
+
     const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
@@ -304,7 +311,7 @@ function parse(result: QueryResult, cast: Cast, returnAs: ExecuteAs): Row[] {
 }
 
 function decodeRow(row: QueryResultRow): Array<string | null> {
-  const values = atob(row.values)
+  const values = row.values ? atob(row.values) : ''
   let offset = 0
   return row.lengths.map((size) => {
     const width = parseInt(size, 10)

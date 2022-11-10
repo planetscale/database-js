@@ -121,18 +121,24 @@ describe('execute', () => {
     const mockResponse = {
       session: mockSession,
       result: {
-        fields: [{ name: ':vtg1', type: 'INT32' }],
-        rows: [{ lengths: ['1'], values: 'MQ==' }]
+        fields: [
+          { name: ':vtg1', type: 'INT32' },
+          { name: 'null' },
+        ],
+        rows: [{ lengths: ['1', '-1'], values: 'MQ==' }]
       }
     }
 
     const want: ExecutedQuery = {
-      headers: [':vtg1'],
-      types: { ':vtg1': 'INT32' },
-      fields: [{ name: ':vtg1', type: 'INT32' }],
-      rows: [{ ':vtg1': 1 }],
+      headers: [':vtg1', 'null'],
+      types: { ':vtg1': 'INT32', 'null': 'NULL' },
+      fields: [
+        { name: ':vtg1', type: 'INT32' },
+        { name: 'null', type: 'NULL' },
+      ],
+      rows: [{ ':vtg1': 1, 'null': null }],
       size: 1,
-      statement: 'SELECT 1 from dual;',
+      statement: 'SELECT 1, null from dual;',
       time: 1,
       rowsAffected: null,
       insertId: null
@@ -146,7 +152,7 @@ describe('execute', () => {
     })
 
     const connection = connect(config)
-    const got = await connection.execute('SELECT 1 from dual;')
+    const got = await connection.execute('SELECT 1, null from dual;')
     got.time = 1
 
     expect(got).toEqual(want)
@@ -158,7 +164,58 @@ describe('execute', () => {
       return mockResponse
     })
 
-    const got2 = await connection.execute('SELECT 1 from dual;')
+    const got2 = await connection.execute('SELECT 1, null from dual;')
+    got2.time = 1
+
+    expect(got2).toEqual(want)
+  })
+
+  test('it properly returns and decodes a select query (select null)', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        fields: [
+          { name: 'null' },
+        ],
+        rows: [{ lengths: ['-1']}]
+      }
+    }
+
+    const want: ExecutedQuery = {
+      headers: ['null'],
+      types: { 'null': 'NULL' },
+      fields: [
+        { name: 'null', type: 'NULL' },
+      ],
+      rows: [{ 'null': null }],
+      size: 1,
+      statement: 'SELECT null',
+      time: 1,
+      rowsAffected: null,
+      insertId: null
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(null)
+      return mockResponse
+    })
+
+    const connection = connect(config)
+    const got = await connection.execute('SELECT null')
+    got.time = 1
+
+    expect(got).toEqual(want)
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(mockSession)
+      return mockResponse
+    })
+
+    const got2 = await connection.execute('SELECT null')
     got2.time = 1
 
     expect(got2).toEqual(want)
