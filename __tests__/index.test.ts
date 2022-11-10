@@ -121,22 +121,19 @@ describe('execute', () => {
     const mockResponse = {
       session: mockSession,
       result: {
-        fields: [
-          { name: ':vtg1', type: 'INT32' },
-          { name: 'null' },
-        ],
+        fields: [{ name: ':vtg1', type: 'INT32' }, { name: 'null' }],
         rows: [{ lengths: ['1', '-1'], values: 'MQ==' }]
       }
     }
 
     const want: ExecutedQuery = {
       headers: [':vtg1', 'null'],
-      types: { ':vtg1': 'INT32', 'null': 'NULL' },
+      types: { ':vtg1': 'INT32', null: 'NULL' },
       fields: [
         { name: ':vtg1', type: 'INT32' },
-        { name: 'null', type: 'NULL' },
+        { name: 'null', type: 'NULL' }
       ],
-      rows: [{ ':vtg1': 1, 'null': null }],
+      rows: [{ ':vtg1': 1, null: null }],
       size: 1,
       statement: 'SELECT 1, null from dual;',
       time: 1,
@@ -174,20 +171,16 @@ describe('execute', () => {
     const mockResponse = {
       session: mockSession,
       result: {
-        fields: [
-          { name: 'null' },
-        ],
-        rows: [{ lengths: ['-1']}]
+        fields: [{ name: 'null' }],
+        rows: [{ lengths: ['-1'] }]
       }
     }
 
     const want: ExecutedQuery = {
       headers: ['null'],
-      types: { 'null': 'NULL' },
-      fields: [
-        { name: 'null', type: 'NULL' },
-      ],
-      rows: [{ 'null': null }],
+      types: { null: 'NULL' },
+      fields: [{ name: 'null', type: 'NULL' }],
+      rows: [{ null: null }],
       size: 1,
       statement: 'SELECT null',
       time: 1,

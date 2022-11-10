@@ -222,7 +222,9 @@ export class Connection {
     // NULL due to the protojson spec. NULL in our enum
     // is 0, and empty fields are omitted from the JSON response,
     // so we should backfill an expected type.
-    fields.forEach((f) => { f.type = f.type || 'NULL' })
+    fields.forEach((f) => {
+      f.type = f.type || 'NULL'
+    })
 
     const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
