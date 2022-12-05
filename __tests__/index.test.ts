@@ -124,7 +124,7 @@ describe('execute', () => {
         fields: [{ name: ':vtg1', type: 'INT32' }, { name: 'null' }],
         rows: [{ lengths: ['1', '-1'], values: 'MQ==' }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -137,9 +137,9 @@ describe('execute', () => {
       rows: [{ ':vtg1': 1, null: null }],
       size: 1,
       statement: 'SELECT 1, null from dual;',
-      time: 1,
       rowsAffected: null,
-      insertId: null
+      insertId: null,
+      time: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -162,7 +162,6 @@ describe('execute', () => {
     })
 
     const got2 = await connection.execute('SELECT 1, null from dual;')
-    got2.time = 1
 
     expect(got2).toEqual(want)
   })
@@ -174,7 +173,7 @@ describe('execute', () => {
         fields: [{ name: 'null' }],
         rows: [{ lengths: ['-1'] }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -184,9 +183,9 @@ describe('execute', () => {
       rows: [{ null: null }],
       size: 1,
       statement: 'SELECT null',
-      time: 1,
       rowsAffected: null,
-      insertId: null
+      insertId: null,
+      time: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -209,7 +208,6 @@ describe('execute', () => {
     })
 
     const got2 = await connection.execute('SELECT null')
-    got2.time = 1
 
     expect(got2).toEqual(want)
   })
@@ -221,7 +219,7 @@ describe('execute', () => {
         fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -231,7 +229,7 @@ describe('execute', () => {
       fields: [{ name: ':vtg1', type: 'INT32' }],
       size: 1,
       statement: 'SELECT 1 from dual;',
-      time: 1,
+      time: 1000,
       rowsAffected: null,
       insertId: null
     }
@@ -283,7 +281,7 @@ describe('execute', () => {
       result: {
         rowsAffected: '1'
       },
-      timing: 1000
+      timing: 1
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
@@ -298,7 +296,7 @@ describe('execute', () => {
       insertId: null,
       size: 0,
       statement: query,
-      time: 1
+      time: 1000
     }
 
     const connection = connect(config)
@@ -314,7 +312,7 @@ describe('execute', () => {
         rowsAffected: '1',
         insertId: '2'
       },
-      timing: 1000
+      timing: 1
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
@@ -329,7 +327,7 @@ describe('execute', () => {
       insertId: '2',
       size: 0,
       statement: query,
-      time: 1
+      time: 1000
     }
 
     const connection = connect(config)
@@ -401,7 +399,7 @@ describe('execute', () => {
         fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -413,7 +411,7 @@ describe('execute', () => {
       insertId: null,
       rowsAffected: null,
       statement: "SELECT 1 from dual where foo = 'bar';",
-      time: 1
+      time: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -435,7 +433,7 @@ describe('execute', () => {
         fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -447,7 +445,7 @@ describe('execute', () => {
       insertId: null,
       rowsAffected: null,
       statement: 'select `login`, `email` from `users` where id = 42',
-      time: 1
+      time: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -469,7 +467,7 @@ describe('execute', () => {
         fields: [{ name: ':vtg1', type: 'INT64' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -481,7 +479,7 @@ describe('execute', () => {
       insertId: null,
       rowsAffected: null,
       statement: 'select 1 from dual',
-      time: 1
+      time: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -506,7 +504,7 @@ describe('execute', () => {
         fields: [{ name: 'document', type: 'JSON' }],
         rows: [{ lengths: [String(document.length)], values: btoa(document) }]
       },
-      timing: 1000
+      timing: 1
     }
 
     const want: ExecutedQuery = {
@@ -518,7 +516,7 @@ describe('execute', () => {
       insertId: null,
       rowsAffected: null,
       statement: 'select document from documents',
-      time: 1
+      time: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {

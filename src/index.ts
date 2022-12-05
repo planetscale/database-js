@@ -241,7 +241,7 @@ export class Connection {
       insertId,
       size: rows.length,
       statement: sql,
-      time: timingSeconds / 1000
+      time: timingSeconds * 1000
     }
   }
 
