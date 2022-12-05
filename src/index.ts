@@ -89,6 +89,7 @@ interface QueryExecuteResponse {
   session: QuerySession
   result: QueryResult | null
   error?: VitessError
+  timing?: number // duration in seconds
 }
 
 interface QueryResult {
@@ -202,11 +203,9 @@ export class Connection {
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
 
-    const start = Date.now()
     const saved = await postJSON<QueryExecuteResponse>(this.config, url, { query: sql, session: this.session })
-    const time = Date.now() - start
 
-    const { result, session, error } = saved
+    const { result, session, error, timing } = saved
     if (error) {
       throw new DatabaseError(error.message, 400, error)
     }
@@ -231,6 +230,7 @@ export class Connection {
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
     const types = fields.reduce<Types>(typeByName, {})
+    const timingSeconds = timing ?? 0
 
     return {
       headers,
@@ -241,7 +241,7 @@ export class Connection {
       insertId,
       size: rows.length,
       statement: sql,
-      time
+      time: timingSeconds * 1000
     }
   }
 
