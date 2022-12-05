@@ -123,7 +123,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: ':vtg1', type: 'INT32' }, { name: 'null' }],
         rows: [{ lengths: ['1', '-1'], values: 'MQ==' }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -150,7 +151,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1, null from dual;')
-    got.time = 1
 
     expect(got).toEqual(want)
 
@@ -173,7 +173,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: 'null' }],
         rows: [{ lengths: ['-1'] }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -197,7 +198,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute('SELECT null')
-    got.time = 1
 
     expect(got).toEqual(want)
 
@@ -220,7 +220,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -244,7 +245,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1 from dual;', null, { as: 'array' })
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -252,7 +252,8 @@ describe('execute', () => {
   test('it properly returns an executed query for a DDL statement', async () => {
     const mockResponse = {
       session: mockSession,
-      result: {}
+      result: {},
+      timing: 0
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
@@ -267,12 +268,11 @@ describe('execute', () => {
       insertId: null,
       size: 0,
       statement: query,
-      time: 1
+      time: 0
     }
 
     const connection = connect(config)
     const got = await connection.execute(query)
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -282,7 +282,8 @@ describe('execute', () => {
       session: mockSession,
       result: {
         rowsAffected: '1'
-      }
+      },
+      timing: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
@@ -302,7 +303,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute(query)
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -313,7 +313,8 @@ describe('execute', () => {
       result: {
         rowsAffected: '1',
         insertId: '2'
-      }
+      },
+      timing: 1000
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
@@ -333,7 +334,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute(query)
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -400,7 +400,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -423,7 +424,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute('SELECT ? from dual where foo = ?;', [1, 'bar'])
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -434,7 +434,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: ':vtg1', type: 'INT32' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -457,7 +458,6 @@ describe('execute', () => {
 
     const connection = connect({ ...config, format: SqlString.format })
     const got = await connection.execute('select ?? from ?? where id = ?', [['login', 'email'], 'users', 42])
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -468,7 +468,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: ':vtg1', type: 'INT64' }],
         rows: [{ lengths: ['1'], values: 'MQ==' }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -492,7 +493,6 @@ describe('execute', () => {
     const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual')
-    got.time = 1
 
     expect(got).toEqual(want)
   })
@@ -505,7 +505,8 @@ describe('execute', () => {
       result: {
         fields: [{ name: 'document', type: 'JSON' }],
         rows: [{ lengths: [String(document.length)], values: btoa(document) }]
-      }
+      },
+      timing: 1000
     }
 
     const want: ExecutedQuery = {
@@ -528,7 +529,6 @@ describe('execute', () => {
 
     const connection = connect(config)
     const got = await connection.execute('select document from documents')
-    got.time = 1
 
     expect(got).toEqual(want)
   })
