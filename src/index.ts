@@ -102,7 +102,8 @@ interface QueryResult {
 type ExecuteAs = 'array' | 'object'
 
 type ExecuteOptions = {
-  as?: ExecuteAs
+  as?: ExecuteAs,
+  cast?: Cast
 }
 
 type ExecuteArgs = object | any[] | null
@@ -198,6 +199,10 @@ export class Connection {
     args: ExecuteArgs = null,
     options: ExecuteOptions = defaultExecuteOptions
   ): Promise<ExecutedQuery> {
+
+    // needed because we're adding the cast option...
+    options = {...defaultExecuteOptions, ...options}
+
     const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
 
     const formatter = this.config.format || format
@@ -225,7 +230,7 @@ export class Connection {
       field.type ||= 'NULL'
     }
 
-    const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
+    const rows = result ? parse(result, options.cast || this.config.cast || cast, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
