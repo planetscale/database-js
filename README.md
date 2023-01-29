@@ -156,24 +156,6 @@ const conn = connect(config)
 You can also pass a custom `cast` function to `execute`. If present, this will override the `cast` function set by the connection:
 
 ```ts
-import { connect, cast } from '@planetscale/database'
-
-function connectionInflate(field, value) {
-  if (field.type === 'INT64' || field.type === 'UINT64') {
-    return BigInt(value)
-  }
-  return cast(field, value)
-}
-
-const config = {
-  cast: connectionInflate,
-  host: '<host>',
-  username: '<user>',
-  password: '<password>'
-}
-
-const conn = connect(config)
-
 const result = await conn.execute(
   'SELECT userId, SUM(balance) AS balance FROM UserBalanceItem GROUP BY userId',
   {},
