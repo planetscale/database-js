@@ -137,8 +137,8 @@ describe('execute', () => {
       rows: [{ ':vtg1': 1, null: null }],
       size: 1,
       statement: 'SELECT 1, null from dual;',
-      rowsAffected: 0,
-      insertId: '0',
+      rowsAffected: 0n,
+      insertId: 0n,
       time: 1000
     }
 
@@ -183,8 +183,8 @@ describe('execute', () => {
       rows: [{ null: null }],
       size: 1,
       statement: 'SELECT null',
-      rowsAffected: 0,
-      insertId: '0',
+      rowsAffected: 0n,
+      insertId: 0n,
       time: 1000
     }
 
@@ -230,8 +230,8 @@ describe('execute', () => {
       size: 1,
       statement: 'SELECT 1 from dual;',
       time: 1000,
-      rowsAffected: 0,
-      insertId: '0'
+      rowsAffected: 0n,
+      insertId: 0n
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -262,8 +262,8 @@ describe('execute', () => {
       types: {},
       fields: [],
       rows: [],
-      rowsAffected: 0,
-      insertId: '0',
+      rowsAffected: 0n,
+      insertId: 0n,
       size: 0,
       statement: query,
       time: 0
@@ -292,8 +292,8 @@ describe('execute', () => {
       types: {},
       fields: [],
       rows: [],
-      rowsAffected: 1,
-      insertId: '0',
+      rowsAffected: 1n,
+      insertId: 0n,
       size: 0,
       statement: query,
       time: 1000
@@ -323,8 +323,8 @@ describe('execute', () => {
       types: {},
       fields: [],
       rows: [],
-      rowsAffected: 1,
-      insertId: '2',
+      rowsAffected: 1n,
+      insertId: 2n,
       size: 0,
       statement: query,
       time: 1000
@@ -408,8 +408,8 @@ describe('execute', () => {
       types: { ':vtg1': 'INT32' },
       fields: [{ name: ':vtg1', type: 'INT32' }],
       size: 1,
-      insertId: '0',
-      rowsAffected: 0,
+      insertId: 0n,
+      rowsAffected: 0n,
       statement: "SELECT 1 from dual where foo = 'bar';",
       time: 1000
     }
@@ -442,8 +442,8 @@ describe('execute', () => {
       fields: [{ name: ':vtg1', type: 'INT32' }],
       rows: [{ ':vtg1': 1 }],
       size: 1,
-      insertId: '0',
-      rowsAffected: 0,
+      insertId: 0n,
+      rowsAffected: 0n,
       statement: 'select `login`, `email` from `users` where id = 42',
       time: 1000
     }
@@ -474,10 +474,10 @@ describe('execute', () => {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT64' },
       fields: [{ name: ':vtg1', type: 'INT64' }],
-      rows: [{ ':vtg1': BigInt(1) }],
+      rows: [{ ':vtg1': 1n }],
       size: 1,
-      insertId: '0',
-      rowsAffected: 0,
+      insertId: 0n,
+      rowsAffected: 0n,
       statement: 'select 1 from dual',
       time: 1000
     }
@@ -513,8 +513,8 @@ describe('execute', () => {
       fields: [{ name: 'document', type: 'JSON' }],
       rows: [{ document: JSON.parse(document) }],
       size: 1,
-      insertId: '0',
-      rowsAffected: 0,
+      insertId: 0n,
+      rowsAffected: 0n,
       statement: 'select document from documents',
       time: 1000
     }

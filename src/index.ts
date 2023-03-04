@@ -31,8 +31,8 @@ export interface ExecutedQuery {
   fields: Field[]
   size: number
   statement: string
-  insertId: string
-  rowsAffected: number
+  insertId: bigint
+  rowsAffected: bigint
   time: number
 }
 
@@ -210,8 +210,8 @@ export class Connection {
       throw new DatabaseError(error.message, 400, error)
     }
 
-    const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : 0
-    const insertId = result?.insertId ?? '0'
+    const rowsAffected = result?.rowsAffected ? BigInt(result.rowsAffected) : 0n
+    const insertId = result?.insertId ? BigInt(result.insertId) : 0n
 
     this.session = session
 
@@ -316,6 +316,10 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
   const values = row.values ? atob(row.values) : ''
   let offset = 0
   return row.lengths.map((size) => {
+    // 'lengths' is technically an int64, but we can't use a bigint
+    // here due to it needing to be passed into substring, which only takes
+    // a number. Maybe we should check for overflow of the width and or offset
+    // and error? This case would be super extreme though.
     const width = parseInt(size, 10)
     // Negative length indicates a null value.
     if (width < 0) return null
@@ -326,11 +330,9 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
 }
 
 export function cast(field: Field, value: string | null): any {
-  if (value === '' || value == null) {
-    return value
-  }
-
   switch (field.type) {
+    case 'NULL':
+      return null
     case 'INT8':
     case 'INT16':
     case 'INT24':
@@ -340,13 +342,17 @@ export function cast(field: Field, value: string | null): any {
     case 'UINT24':
     case 'UINT32':
     case 'YEAR':
+      if (value == '' || value == null) return 0
       return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
+      if (value == '' || value == null) return 0
       return parseFloat(value)
-    case 'DECIMAL':
     case 'INT64':
     case 'UINT64':
+      if (value == '' || value == null) return 0n
+      return BigInt(value)
+    case 'DECIMAL':
     case 'DATE':
     case 'TIME':
     case 'DATETIME':
