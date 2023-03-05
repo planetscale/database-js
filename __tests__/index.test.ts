@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
+import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/esm/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 

@@ -4,7 +4,7 @@
     "target": "es2020",
     "strict": false,
     "declaration": true,
-    "outDir": "dist",
+    "outDir": "dist/esm",
     "removeComments": true,
     "allowJs": true,
     "moduleResolution": "node",

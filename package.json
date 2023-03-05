@@ -2,15 +2,15 @@
   "name": "@planetscale/database",
   "version": "1.5.0",
   "description": "A Fetch API-compatible PlanetScale database driver",
-  "main": "dist/index.js",
-  "types": "dist/index.d.js",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.js",
   "files": [
     "dist"
   ],
   "engines": {
     "node": ">=16"
   },
-  "type": "module",
   "prettier": {
     "semi": false,
     "trailingComma": "none",
@@ -23,7 +23,9 @@
   "scripts": {
     "clean": "rm -rf dist/",
     "prebuild": "npm run clean",
-    "build": "tsc",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsc --target es3 --module commonjs --outDir dist/cjs",
     "lint": "eslint src/ __tests__/",
     "pretest": "npm run build",
     "test": "jest",
