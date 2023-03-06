@@ -31,8 +31,8 @@ export interface ExecutedQuery {
   fields: Field[]
   size: number
   statement: string
-  insertId: string | null
-  rowsAffected: number | null
+  insertId: string
+  rowsAffected: number
   time: number
 }
 
@@ -211,8 +211,8 @@ export class Connection {
       throw new DatabaseError(error.message, 400, error)
     }
 
-    const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : null
-    const insertId = result?.insertId ?? null
+    const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : 0
+    const insertId = result?.insertId ?? '0'
 
     this.session = session
 
