@@ -153,6 +153,23 @@ const config = {
 const conn = connect(config)
 ```
 
+You can also pass a custom `cast` function to `execute`. If present, this will override the `cast` function set by the connection:
+
+```ts
+const result = await conn.execute(
+  'SELECT userId, SUM(balance) AS balance FROM UserBalanceItem GROUP BY userId',
+  {},
+  {
+    cast: (field, value) => {
+      if (field.name === 'balance') {
+        return BigInt(value)
+      }
+      return cast(field, value)
+    }
+  }
+)
+```
+
 ### Row return values
 
 Rows can be returned as an object or an array of column values by passing an `as` option to `execute`.
