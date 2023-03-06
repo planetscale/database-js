@@ -511,8 +511,8 @@ describe('execute', () => {
       fields: [{ name: ':vtg1', type: 'INT64' }],
       rows: [{ ':vtg1': 'I am a biggish int' }],
       size: 1,
-      insertId: null,
-      rowsAffected: null,
+      insertId: '0',
+      rowsAffected: 0,
       statement: 'select 1 from dual',
       time: 1000
     }
@@ -525,7 +525,7 @@ describe('execute', () => {
     const connInflate = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
     const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
     const connection = connect({ ...config, cast: inflate })
-    const got = await connection.execute('select 1 from dual', {}, {cast: connInflate})
+    const got = await connection.execute('select 1 from dual', {}, { cast: connInflate })
 
     expect(got).toEqual(want)
   })
