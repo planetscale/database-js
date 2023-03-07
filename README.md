@@ -102,6 +102,28 @@ const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
 
+To leverage HTTP/2, you can use the [`fetch-h2`][1] shim. `fetch-h2` also supports Node.js 12+.
+
+[1]: https://www.npmjs.com/package/fetch-h2
+
+```ts
+import { connect } from '@planetscale/database'
+import { context } from 'fetch-h2'
+const { fetch, disconnectAll } = context()
+
+const config = {
+  fetch,
+  host: '<host>',
+  username: '<user>',
+  password: '<password>'
+}
+
+const conn = connect(config)
+const results = await conn.execute('select 1 from dual')
+console.log(results)
+await disconnectAll()
+```
+
 ### Custom query parameter format function
 
 Query replacement parameters identified with `?` are replaced with escaped values. Named replacement parameters are supported with a colon prefix.
