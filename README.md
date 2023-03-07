@@ -88,8 +88,7 @@ Node.js version 18 includes a built-in global `fetch` function. When using an ol
 
 ```ts
 import { connect } from '@planetscale/database'
-import { context } from 'fetch-h2'
-const { fetch, disconnectAll } = context()
+import { fetch } from 'undici'
 
 const config = {
   fetch,
@@ -101,7 +100,6 @@ const config = {
 const conn = connect(config)
 const results = await conn.execute('select 1 from dual')
 console.log(results)
-await disconnectAll()
 ```
 
 If you want to a `fetch` client which supports HTTP/2, it is recommended to use the [`fetch-h2`][1] shim. `fetch-h2` also supports Node.js 12+.
