@@ -102,7 +102,7 @@ const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
 
-If you want to a `fetch` client which supports HTTP/2, it is recommended to use the [`fetch-h2`][1] shim. `fetch-h2` also supports Node.js 12+.
+To leverage HTTP/2, you can use the [`fetch-h2`][1] shim. `fetch-h2` also supports Node.js 12+.
 
 [1]: https://www.npmjs.com/package/fetch-h2
 
