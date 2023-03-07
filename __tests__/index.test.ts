@@ -137,8 +137,8 @@ describe('execute', () => {
       rows: [{ ':vtg1': 1, null: null }],
       size: 1,
       statement: 'SELECT 1, null from dual;',
-      rowsAffected: null,
-      insertId: null,
+      rowsAffected: 0,
+      insertId: '0',
       time: 1000
     }
 
@@ -183,8 +183,8 @@ describe('execute', () => {
       rows: [{ null: null }],
       size: 1,
       statement: 'SELECT null',
-      rowsAffected: null,
-      insertId: null,
+      rowsAffected: 0,
+      insertId: '0',
       time: 1000
     }
 
@@ -230,8 +230,8 @@ describe('execute', () => {
       size: 1,
       statement: 'SELECT 1 from dual;',
       time: 1000,
-      rowsAffected: null,
-      insertId: null
+      rowsAffected: 0,
+      insertId: '0'
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
@@ -262,8 +262,8 @@ describe('execute', () => {
       types: {},
       fields: [],
       rows: [],
-      rowsAffected: null,
-      insertId: null,
+      rowsAffected: 0,
+      insertId: '0',
       size: 0,
       statement: query,
       time: 0
@@ -293,7 +293,7 @@ describe('execute', () => {
       fields: [],
       rows: [],
       rowsAffected: 1,
-      insertId: null,
+      insertId: '0',
       size: 0,
       statement: query,
       time: 1000
@@ -408,8 +408,8 @@ describe('execute', () => {
       types: { ':vtg1': 'INT32' },
       fields: [{ name: ':vtg1', type: 'INT32' }],
       size: 1,
-      insertId: null,
-      rowsAffected: null,
+      insertId: '0',
+      rowsAffected: 0,
       statement: "SELECT 1 from dual where foo = 'bar';",
       time: 1000
     }
@@ -442,8 +442,8 @@ describe('execute', () => {
       fields: [{ name: ':vtg1', type: 'INT32' }],
       rows: [{ ':vtg1': 1 }],
       size: 1,
-      insertId: null,
-      rowsAffected: null,
+      insertId: '0',
+      rowsAffected: 0,
       statement: 'select `login`, `email` from `users` where id = 42',
       time: 1000
     }
@@ -476,8 +476,8 @@ describe('execute', () => {
       fields: [{ name: ':vtg1', type: 'INT64' }],
       rows: [{ ':vtg1': BigInt(1) }],
       size: 1,
-      insertId: null,
-      rowsAffected: null,
+      insertId: '0',
+      rowsAffected: 0,
       statement: 'select 1 from dual',
       time: 1000
     }
@@ -491,6 +491,41 @@ describe('execute', () => {
     const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual')
+
+    expect(got).toEqual(want)
+  })
+
+  test('uses custom cast function when it is passed to execute', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT64' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      },
+      timing: 1
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      types: { ':vtg1': 'INT64' },
+      fields: [{ name: ':vtg1', type: 'INT64' }],
+      rows: [{ ':vtg1': 'I am a biggish int' }],
+      size: 1,
+      insertId: '0',
+      rowsAffected: 0,
+      statement: 'select 1 from dual',
+      time: 1000
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+    const connInflate = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
+    const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
+    const connection = connect({ ...config, cast: inflate })
+    const got = await connection.execute('select 1 from dual', {}, { cast: connInflate })
 
     expect(got).toEqual(want)
   })
@@ -513,8 +548,8 @@ describe('execute', () => {
       fields: [{ name: 'document', type: 'JSON' }],
       rows: [{ document: JSON.parse(document) }],
       size: 1,
-      insertId: null,
-      rowsAffected: null,
+      insertId: '0',
+      rowsAffected: 0,
       statement: 'select document from documents',
       time: 1000
     }

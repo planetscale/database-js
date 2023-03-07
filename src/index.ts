@@ -31,8 +31,8 @@ export interface ExecutedQuery {
   fields: Field[]
   size: number
   statement: string
-  insertId: string | null
-  rowsAffected: number | null
+  insertId: string
+  rowsAffected: number
   time: number
 }
 
@@ -103,6 +103,7 @@ type ExecuteAs = 'array' | 'object'
 
 type ExecuteOptions = {
   as?: ExecuteAs
+  cast?: Cast
 }
 
 type ExecuteArgs = object | any[] | null
@@ -210,8 +211,8 @@ export class Connection {
       throw new DatabaseError(error.message, 400, error)
     }
 
-    const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : null
-    const insertId = result?.insertId ?? null
+    const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : 0
+    const insertId = result?.insertId ?? '0'
 
     this.session = session
 
@@ -225,7 +226,8 @@ export class Connection {
       field.type ||= 'NULL'
     }
 
-    const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
+    const castFn = options.cast || this.config.cast || cast
+    const rows = result ? parse(result, castFn, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
