@@ -80,13 +80,31 @@ const results = await conn.transaction(async (tx) => {
 console.log(results)
 ```
 
-### HTTP/2 and HTTP/3
-
-It is preferrable performance to use HTTP/2 or when possible, HTTP/3, but `fetch` implementations and support vary. For example, in Node.js, the built-in `fetch` uses HTTP/1.1 and requires a shim to get HTTP/2 support, despite HTTP/2 being built-in as well. When HTTP/3 shims or HTTP/3 `fetch` implementations are available, we support this on the server side already.
-
 ### Custom fetch function
 
-Node.js version 18 includes a built-in global `fetch` function, but this uses HTTP/1.1. While the built-in `fetch` will work, it is recommended to use the [`fetch-h2`][1] shim if possible. `fetch-h2` also supports Node.js 12+.
+Node.js version 18 includes a built-in global `fetch` function. When using an older version of Node.js, you can provide a custom fetch function implementation. We recommend the [`undici`][1] package on which Node's built-in fetch is based.
+
+[1]: https://github.com/nodejs/undici
+
+```ts
+import { connect } from '@planetscale/database'
+import { context } from 'fetch-h2'
+const { fetch, disconnectAll } = context()
+
+const config = {
+  fetch,
+  host: '<host>',
+  username: '<user>',
+  password: '<password>'
+}
+
+const conn = connect(config)
+const results = await conn.execute('select 1 from dual')
+console.log(results)
+await disconnectAll()
+```
+
+If you want to a `fetch` client which supports HTTP/2, it is recommended to use the [`fetch-h2`][1] shim. `fetch-h2` also supports Node.js 12+.
 
 [1]: https://www.npmjs.com/package/fetch-h2
 
