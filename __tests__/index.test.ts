@@ -495,6 +495,41 @@ describe('execute', () => {
     expect(got).toEqual(want)
   })
 
+  test('uses custom cast function when it is passed to execute', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT64' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      },
+      timing: 1
+    }
+
+    const want: ExecutedQuery = {
+      headers: [':vtg1'],
+      types: { ':vtg1': 'INT64' },
+      fields: [{ name: ':vtg1', type: 'INT64' }],
+      rows: [{ ':vtg1': 'I am a biggish int' }],
+      size: 1,
+      insertId: '0',
+      rowsAffected: 0,
+      statement: 'select 1 from dual',
+      time: 1000
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+    const connInflate = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
+    const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
+    const connection = connect({ ...config, cast: inflate })
+    const got = await connection.execute('select 1 from dual', {}, { cast: connInflate })
+
+    expect(got).toEqual(want)
+  })
+
   test('parses json column values', async () => {
     const document = JSON.stringify({ answer: 42 })
 

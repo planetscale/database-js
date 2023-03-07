@@ -103,6 +103,7 @@ type ExecuteAs = 'array' | 'object'
 
 type ExecuteOptions = {
   as?: ExecuteAs
+  cast?: Cast
 }
 
 type ExecuteArgs = object | any[] | null
@@ -225,7 +226,8 @@ export class Connection {
       field.type ||= 'NULL'
     }
 
-    const rows = result ? parse(result, this.config.cast || cast, options.as || 'object') : []
+    const castFn = options.cast || this.config.cast || cast
+    const rows = result ? parse(result, castFn, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
     const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
