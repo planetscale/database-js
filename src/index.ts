@@ -40,6 +40,7 @@ type Req = {
   method: string
   headers: Record<string, string>
   body: string
+  cache?: RequestCache
 }
 
 type Res = {
@@ -265,7 +266,14 @@ async function postJSON<T>(config: Config, url: string | URL, body = {}): Promis
       'Content-Type': 'application/json',
       'User-Agent': `database-js/${Version}`,
       Authorization: `Basic ${auth}`
-    }
+    },
+    // XXX: this should be overly redundant and the default behavior should be sufficient,
+    // since we both are a POST request and send an Authorization header, this request should
+    // by all means be considered an "unsafe" request for caching purposes. But it seems some
+    // implementations think differently, so I don't see harm in being overly explicit, since
+    // this `cache` argument is a part of the actual Fetch API spec anyways. We're just opting
+    // out of the default behavior.
+    cache: 'no-store'
   })
 
   if (response.ok) {
