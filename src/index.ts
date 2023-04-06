@@ -40,6 +40,7 @@ type Req = {
   method: string
   headers: Record<string, string>
   body: string
+  cache?: RequestCache
 }
 
 type Res = {
@@ -265,7 +266,8 @@ async function postJSON<T>(config: Config, url: string | URL, body = {}): Promis
       'Content-Type': 'application/json',
       'User-Agent': `database-js/${Version}`,
       Authorization: `Basic ${auth}`
-    }
+    },
+    cache: 'no-store'
   })
 
   if (response.ok) {
