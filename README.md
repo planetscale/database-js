@@ -102,9 +102,9 @@ const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
 
-To leverage HTTP/2, you can use the [`fetch-h2`][1] shim. `fetch-h2` also supports Node.js 12+.
+To leverage HTTP/2, you can use the [`fetch-h2`][2] shim. `fetch-h2` also supports Node.js 12+.
 
-[1]: https://www.npmjs.com/package/fetch-h2
+[2]: https://www.npmjs.com/package/fetch-h2
 
 ```ts
 import { connect } from '@planetscale/database'
