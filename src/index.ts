@@ -359,6 +359,7 @@ export function cast(field: Field, value: string | null): any {
     case 'BIT':
     case 'VARBINARY':
     case 'BINARY':
+    case 'GEOMETRY':
       return value
     case 'JSON':
       return JSON.parse(decode(value))
