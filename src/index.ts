@@ -168,6 +168,9 @@ export class Connection {
     }
 
     if (config.url) {
+      if (!config.url.startsWith('http')) {
+        throw new Error('Please check the url of your connection! It should start with http / https.')
+      }
       const url = new URL(config.url)
       this.config.username = url.username
       this.config.password = url.password
