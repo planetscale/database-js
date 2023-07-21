@@ -31,8 +31,8 @@ describe('config', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
-      expect(opts.headers['user-agent']).toEqual(`database-js/${packageJSON.version}`)
+      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
       return mockResponse
     })
 
@@ -143,7 +143,7 @@ describe('execute', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['authorization']).toMatch(/Basic /)
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(null)
       return mockResponse
@@ -155,7 +155,7 @@ describe('execute', () => {
     expect(got).toEqual(want)
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['authorization']).toMatch(/Basic /)
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(mockSession)
       return mockResponse
@@ -189,7 +189,7 @@ describe('execute', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['authorization']).toMatch(/Basic /)
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(null)
       return mockResponse
@@ -201,7 +201,7 @@ describe('execute', () => {
     expect(got).toEqual(want)
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['authorization']).toMatch(/Basic /)
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(mockSession)
       return mockResponse
@@ -235,7 +235,7 @@ describe('execute', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['authorization']).toMatch(/Basic /)
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(null)
       return mockResponse
