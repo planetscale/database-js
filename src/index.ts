@@ -208,14 +208,16 @@ export class Connection {
     const saved = await postJSON<QueryExecuteResponse>(this.config, url, { query: sql, session: this.session })
 
     const { result, session, error, timing } = saved
+    if (session) {
+      this.session = session
+    }
+
     if (error) {
       throw new DatabaseError(error.message, 400, error)
     }
 
     const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : 0
     const insertId = result?.insertId ?? '0'
-
-    this.session = session
 
     const fields = result?.fields ?? []
     // ensure each field has a type assigned,
