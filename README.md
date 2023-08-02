@@ -80,6 +80,22 @@ const results = await conn.transaction(async (tx) => {
 console.log(results)
 ```
 
+### Usage with PlanetScale Boost
+
+To enable PlanetScale Boost, run `SET @@boost_cached_queries = true` once. All subsequent queries run on the same connection will use boost if it's enabled for the query pattern. Non-matching queries will run as normal.
+
+To learn more, visit: [Query caching with PlanetScale Boost](https://planetscale.com/docs/concepts/query-caching-with-planetscale-boost)
+
+```
+const conn = client.connection()
+// Enable boost for the connection
+await conn.execute('SET @@boost_cached_queries = true')
+
+// Disable boost for the connection
+await conn.execute('SET @@boost_cached_queries = false')
+```
+
+
 ### Custom fetch function
 
 Node.js version 18 includes a built-in global `fetch` function. When using an older version of Node.js, you can provide a custom fetch function implementation. We recommend the [`undici`][1] package on which Node's built-in fetch is based.
