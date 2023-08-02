@@ -86,15 +86,16 @@ To enable PlanetScale Boost, run `SET @@boost_cached_queries = true` once. All s
 
 To learn more, visit: [Query caching with PlanetScale Boost](https://planetscale.com/docs/concepts/query-caching-with-planetscale-boost)
 
-```
+```ts
 const conn = client.connection()
 // Enable boost for the connection
 await conn.execute('SET @@boost_cached_queries = true')
 
-// Disable boost for the connection
+const results = await conn.execute('...')
+
+// Optionally, you may disable boost for the connection by setting to false
 await conn.execute('SET @@boost_cached_queries = false')
 ```
-
 
 ### Custom fetch function
 
