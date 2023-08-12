@@ -392,6 +392,30 @@ describe('execute', () => {
     }
   })
 
+  test('thrown database errors include parsed sql statement', async () => {
+    const mockError = {
+      message:
+        'target: test.0.primary: vttablet: rpc error: code = NotFound desc = Table \'vt_test_0.foo\' doesn\'t exist (errno 1146) (sqlstate 42S02) (CallerID: unsecure_grpc_client): Sql: "select * from foo where id = 1", BindVars: {#maxLimit: "type:INT64 value:\\"10001\\""}',
+      code: 'NOT_FOUND'
+    }
+
+    const mockResponse = {
+      session: mockSession,
+      error: mockError
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+
+    const connection = connect(config)
+    const statement = 'SELECT * from foo WHERE id = ?;'
+    const values = [1]
+    try {
+      await connection.execute(statement, values)
+    } catch (err) {
+      expect(err.sql).toEqual(format(statement, values))
+    }
+  })
+
   test('it properly escapes query parameters', async () => {
     const mockResponse = {
       session: null,
