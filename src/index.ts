@@ -14,11 +14,13 @@ interface VitessError {
 export class DatabaseError extends Error {
   body: VitessError
   status: number
-  constructor(message: string, status: number, body: VitessError) {
+  sql?: string
+  constructor(message: string, status: number, body: VitessError, sql?: string) {
     super(message)
     this.status = status
     this.name = 'DatabaseError'
     this.body = body
+    this.sql = sql
   }
 }
 
@@ -213,7 +215,7 @@ export class Connection {
     }
 
     if (error) {
-      throw new DatabaseError(error.message, 400, error)
+      throw new DatabaseError(error.message, 400, error, sql)
     }
 
     const rowsAffected = result?.rowsAffected ? parseInt(result.rowsAffected, 10) : 0
