@@ -40,27 +40,6 @@ describe('config', () => {
     const got = await connection.execute('SELECT 1 from dual;')
     expect(got).toBeDefined()
   })
-
-  test('parses insecure url when allowed', async () => {
-    const mockResponse = {
-      session: mockSession,
-      result: { fields: [], rows: [] }
-    }
-
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
-      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
-      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
-      return mockResponse
-    })
-
-    const connection = connect({
-      fetch,
-      url: 'http://someuser:password@localhost:3000',
-      allowInsecureConnection: true
-    })
-    const got = await connection.execute('SELECT 1 from dual;')
-    expect(got).toBeDefined()
-  })
 })
 
 describe('transaction', () => {
@@ -585,6 +564,70 @@ describe('execute', () => {
     const got = await connection.execute('select document from documents')
 
     expect(got).toEqual(want)
+  })
+
+  test('properly executes a query with an insecure connection URL', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: { fields: [], rows: [] }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
+      return mockResponse
+    })
+
+    const connection = connect({
+      fetch,
+      url: 'http://someuser:password@localhost:3000',
+      allowInsecureConnection: true
+    })
+    const got = await connection.execute('SELECT 1 from dual;')
+    expect(got).toBeDefined()
+  })
+
+  test('properly executes a query with allowInsecureConnection true and also with a custom port specified', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: { fields: [], rows: [] }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
+      return mockResponse
+    })
+
+    const connection = connect({
+      ...config,
+      allowInsecureConnection: true,
+      host: 'localhost',
+      port: 3000
+    })
+    const got = await connection.execute('SELECT 1 from dual;')
+    expect(got).toBeDefined()
+  })
+
+  test('ignores the port when using with a secure connection', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: { fields: [], rows: [] }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
+      return mockResponse
+    })
+
+    const connection = connect({
+      ...config,
+      port: 3000
+    })
+
+    const got = await connection.execute('SELECT 1 from dual;')
+    expect(got).toBeDefined()
   })
 })
 
