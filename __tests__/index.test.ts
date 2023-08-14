@@ -3,7 +3,7 @@ import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dis
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
-const mockHosts = ['https://example.com', 'https://localhost', 'http://localhost:3000']
+const mockHosts = ['https://example.com', 'http://localhost:3000']
 
 const CREATE_SESSION_PATH = '/psdb.v1alpha1.Database/CreateSession'
 const EXECUTE_PATH = '/psdb.v1alpha1.Database/Execute'
