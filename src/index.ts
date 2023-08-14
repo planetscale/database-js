@@ -58,6 +58,7 @@ export interface Config {
   username?: string
   password?: string
   host?: string
+  allowInsecureConnection?: boolean
   fetch?: (input: string, init?: Req) => Promise<Res>
   format?: (query: string, args: any) => string
   cast?: Cast
@@ -178,8 +179,10 @@ export class Connection {
       this.config.password = url.password
       this.config.host = url.hostname
 
-      protocol = url.protocol.startsWith('http') ? url.protocol : protocol
-      port = url.port
+      if (this.config.allowInsecureConnection) {
+        protocol = url.protocol.startsWith('http') ? url.protocol : protocol
+        port = url.port
+      }
     }
 
     this.url = new URL(`${protocol}//${this.config.host}${port ? `:${port}` : ''}`)

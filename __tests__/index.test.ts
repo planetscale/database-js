@@ -3,7 +3,7 @@ import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dis
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
-const mockHosts = ['https://example.com', 'http://localhost:3000']
+const mockHosts = ['https://example.com', 'https://localhost', 'http://localhost:3000']
 
 const CREATE_SESSION_PATH = '/psdb.v1alpha1.Database/CreateSession'
 const EXECUTE_PATH = '/psdb.v1alpha1.Database/Execute'
@@ -41,7 +41,7 @@ describe('config', () => {
     expect(got).toBeDefined()
   })
 
-  test('parses localhost url', async () => {
+  test('parses insecure url when allowed', async () => {
     const mockResponse = {
       session: mockSession,
       result: { fields: [], rows: [] }
@@ -53,7 +53,11 @@ describe('config', () => {
       return mockResponse
     })
 
-    const connection = connect({ fetch, url: 'http://someuser:password@localhost:3000' })
+    const connection = connect({
+      fetch,
+      url: 'http://someuser:password@localhost:3000',
+      allowInsecureConnection: true
+    })
     const got = await connection.execute('SELECT 1 from dual;')
     expect(got).toBeDefined()
   })
