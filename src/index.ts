@@ -158,8 +158,12 @@ class Tx {
 export class Connection {
   private config: Config
   private session: QuerySession | null
+  private url: URL
 
   constructor(config: Config) {
+    let protocol = 'https:'
+    let port: string = ''
+
     this.session = null
     this.config = { ...config }
 
@@ -169,10 +173,16 @@ export class Connection {
 
     if (config.url) {
       const url = new URL(config.url)
+
       this.config.username = url.username
       this.config.password = url.password
       this.config.host = url.hostname
+
+      protocol = url.protocol.startsWith('http') ? url.protocol : protocol
+      port = url.port
     }
+
+    this.url = new URL(`${protocol}//${this.config.host}${port ? `:${port}` : ''}`)
   }
 
   async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
@@ -200,7 +210,7 @@ export class Connection {
     args: ExecuteArgs = null,
     options: ExecuteOptions = defaultExecuteOptions
   ): Promise<ExecutedQuery> {
-    const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
+    const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
 
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
@@ -251,7 +261,7 @@ export class Connection {
   }
 
   private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
+    const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
     const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
     this.session = session
     return session
