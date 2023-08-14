@@ -58,6 +58,7 @@ export interface Config {
   username?: string
   password?: string
   host?: string
+  port?: number | null
   allowInsecureConnection?: boolean
   fetch?: (input: string, init?: Req) => Promise<Res>
   format?: (query: string, args: any) => string
@@ -159,12 +160,8 @@ class Tx {
 export class Connection {
   private config: Config
   private session: QuerySession | null
-  private url: URL
 
   constructor(config: Config) {
-    let protocol = 'https:'
-    let port: string = ''
-
     this.session = null
     this.config = { ...config }
 
@@ -180,12 +177,22 @@ export class Connection {
       this.config.host = url.hostname
 
       if (this.config.allowInsecureConnection) {
-        protocol = url.protocol.startsWith('http') ? url.protocol : protocol
-        port = url.port
+        this.config.port = url.port ? parseInt(url.port) : null
       }
     }
+  }
 
-    this.url = new URL(`${protocol}//${this.config.host}${port ? `:${port}` : ''}`)
+  private apiURL(): string {
+    const protocol = this.config.allowInsecureConnection ? 'http' : 'https'
+
+    // We only want to explicitly allow a designated port when allowing insecure connections.
+    // Otherwise, default to the protocol's default port.
+    const url =
+      this.config.port && this.config.allowInsecureConnection
+        ? `${protocol}://${this.config.host}:${this.config.port.toString()}`
+        : `${protocol}://${this.config.host}`
+
+    return url
   }
 
   async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
@@ -213,7 +220,7 @@ export class Connection {
     args: ExecuteArgs = null,
     options: ExecuteOptions = defaultExecuteOptions
   ): Promise<ExecutedQuery> {
-    const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
+    const url = new URL('/psdb.v1alpha1.Database/Execute', this.apiURL())
 
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
@@ -264,7 +271,7 @@ export class Connection {
   }
 
   private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
+    const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.apiURL())
     const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
     this.session = session
     return session
