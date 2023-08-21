@@ -155,9 +155,20 @@ class Tx {
   }
 }
 
+function protocol(protocol: string): string {
+  return protocol === 'http:' ? protocol : 'https:'
+}
+
+function buildURL(url: URL): string {
+  const scheme = `${protocol(url.protocol)}//`
+
+  return new URL(url.pathname, `${scheme}${url.host}`).toString()
+}
+
 export class Connection {
   private config: Config
   private session: QuerySession | null
+  private url: string
 
   constructor(config: Config) {
     this.session = null
@@ -172,6 +183,9 @@ export class Connection {
       this.config.username = url.username
       this.config.password = url.password
       this.config.host = url.hostname
+      this.url = buildURL(url)
+    } else {
+      this.url = new URL(`https://${this.config.host}`).toString()
     }
   }
 
@@ -200,7 +214,7 @@ export class Connection {
     args: ExecuteArgs = null,
     options: ExecuteOptions = defaultExecuteOptions
   ): Promise<ExecutedQuery> {
-    const url = new URL('/psdb.v1alpha1.Database/Execute', `https://${this.config.host}`)
+    const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
 
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
@@ -251,7 +265,7 @@ export class Connection {
   }
 
   private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', `https://${this.config.host}`)
+    const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
     const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
     this.session = session
     return session
