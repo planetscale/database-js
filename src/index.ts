@@ -4,7 +4,7 @@ export { hex } from './text.js'
 import { decode } from './text.js'
 import { Version } from './version.js'
 
-type Row = Record<string, any> | any[]
+type Row<T = Record<string, any> | any[]> = T
 
 interface VitessError {
   message: string
@@ -24,10 +24,10 @@ export class DatabaseError extends Error {
 
 type Types = Record<string, string>
 
-export interface ExecutedQuery {
+export interface ExecutedQuery<T = any> {
   headers: string[]
   types: Types
-  rows: Row[]
+  rows: Row<T>[]
   fields: Field[]
   size: number
   statement: string
