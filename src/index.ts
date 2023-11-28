@@ -82,6 +82,7 @@ export interface Field {
   charset?: number | null
   flags?: number | null
   columnType?: string | null
+  decimals?: number | null
 }
 
 type QuerySession = unknown
