@@ -609,4 +609,13 @@ describe('cast', () => {
   test('casts int to number', () => {
     expect(cast({ name: 'test', type: 'INT8' }, '12')).toEqual(12)
   })
+
+  test('casts float to number', () => {
+    expect(cast({ name: 'test', type: 'FLOAT32' }, '2.32')).toEqual(2.32)
+    expect(cast({ name: 'test', type: 'FLOAT64' }, '2.32')).toEqual(2.32)
+  })
+
+  test('casts JSON string to JSON object', () => {
+    expect(cast({ name: 'test', type: 'JSON' }, '{ "foo": "bar" }')).toStrictEqual({ foo: 'bar' })
+  })
 })
