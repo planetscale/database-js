@@ -136,6 +136,10 @@ export class Client {
   connection(): Connection {
     return new Connection(this.config)
   }
+
+  get connectionUrl() {
+    return getUrlFromConfig(this.config)
+  }
 }
 
 export type Transaction = Tx
@@ -174,6 +178,10 @@ function buildURL(url: URL): string {
   const scheme = `${protocol(url.protocol)}//`
 
   return new URL(url.pathname, `${scheme}${url.host}`).toString()
+}
+
+function getUrlFromConfig(config: Config): string {
+  return config.url ?? new URL(`https://${this.config.host}`).toString()
 }
 
 export class Connection {
@@ -283,6 +291,10 @@ export class Connection {
       statement: sql,
       time: timingSeconds * 1000
     }
+  }
+
+  get connectionUrl() {
+    return getUrlFromConfig(this.config)
   }
 
   private async createSession(): Promise<QuerySession> {

@@ -56,6 +56,11 @@ describe('config', () => {
     const got = await connection.execute('SELECT 1 from dual;')
     expect(got).toBeDefined()
   })
+
+  test('exposes database url', async () => {
+    const connection = connect({ fetch, url: 'mysql://someuser:password@example.com' })
+    expect(connection.connectionUrl).toBe('mysql://someuser:password@example.com')
+  })
 })
 
 describe('transaction', () => {
