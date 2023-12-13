@@ -181,7 +181,7 @@ function buildURL(url: URL): string {
 }
 
 function getUrlFromConfig(config: Config): string {
-  return config.url ?? new URL(`https://${this.config.host}`).toString()
+  return config.url ?? new URL(`https://${config.host}`).toString()
 }
 
 export class Connection {

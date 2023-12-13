@@ -61,6 +61,11 @@ describe('config', () => {
     const connection = connect({ fetch, url: 'mysql://someuser:password@example.com' })
     expect(connection.connectionUrl).toBe('mysql://someuser:password@example.com')
   })
+
+  test('exposes database url', async () => {
+    const connection = connect(config)
+    expect(connection.connectionUrl).toBe('https://example.com/')
+  })
 })
 
 describe('transaction', () => {
