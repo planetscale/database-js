@@ -143,7 +143,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1', 'null'],
       types: { ':vtg1': 'INT32', null: 'NULL' },
       fields: [
@@ -192,7 +192,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: ['null'],
       types: { null: 'NULL' },
       fields: [{ name: 'null', type: 'NULL' }],
@@ -238,7 +238,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT32' },
       rows: [[1]],
@@ -273,7 +273,7 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const query = 'CREATE TABLE `foo` (bar json);'
-    const want: ExecutedQuery = {
+    const want = {
       headers: [],
       types: {},
       fields: [],
@@ -303,7 +303,7 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const query = "UPDATE `foo` SET bar='planetscale'"
-    const want: ExecutedQuery = {
+    const want = {
       headers: [],
       types: {},
       fields: [],
@@ -334,7 +334,7 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const query = "INSERT INTO `foo` (bar) VALUES ('planetscale');"
-    const want: ExecutedQuery = {
+    const want = {
       headers: [],
       types: {},
       fields: [],
@@ -418,7 +418,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       rows: [{ ':vtg1': 1 }],
       types: { ':vtg1': 'INT32' },
@@ -452,7 +452,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT32' },
       fields: [{ name: ':vtg1', type: 'INT32' }],
@@ -486,7 +486,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT64' },
       fields: [{ name: ':vtg1', type: 'INT64' }],
@@ -521,7 +521,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT64' },
       fields: [{ name: ':vtg1', type: 'INT64' }],
@@ -558,7 +558,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: ['document'],
       types: { document: 'JSON' },
       fields: [{ name: 'document', type: 'JSON' }],
@@ -593,7 +593,67 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
+      headers: [':vtg1', 'null'],
+      types: { ':vtg1': 'INT32', null: 'NULL' },
+      fields: [
+        { name: ':vtg1', type: 'INT32' },
+        { name: 'null', type: 'NULL' }
+      ],
+      rows: [{ ':vtg1': 1, null: null }],
+      size: 1,
+      statement: 'SELECT 1, null from dual;',
+      rowsAffected: 0,
+      insertId: '0',
+      time: 1000
+    }
+
+    interface Got {
+      ':vtg1'?: number
+      null?: null
+    }
+
+    const isGot = (object: any): object is Got => {
+      return ':vtg1' in object && 'null' in object
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(null)
+      return mockResponse
+    })
+
+    const connection = connect(config)
+    const got = await connection.execute<Got>('SELECT 1, null from dual;')
+
+    expect(got).toEqual(want)
+    expect(isGot(got.rows[0])).toBe(true)
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.session).toEqual(mockSession)
+      return mockResponse
+    })
+
+    const got2 = await connection.execute<Got>('SELECT 1, null from dual;')
+
+    expect(got2).toEqual(want)
+    expect(isGot(got2.rows[0])).toBe(true)
+  })
+
+  test('allows setting the type of rows in the query results', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT32' }, { name: 'null' }],
+        rows: [{ lengths: ['1', '-1'], values: 'MQ==' }]
+      },
+      timing: 1
+    }
+
+    const want = {
       headers: [':vtg1', 'null'],
       types: { ':vtg1': 'INT32', null: 'NULL' },
       fields: [
