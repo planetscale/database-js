@@ -1,6 +1,6 @@
 {
   "name": "@planetscale/database",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "A Fetch API-compatible PlanetScale database driver",
   "files": [
     "dist"
