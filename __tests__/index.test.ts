@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dist/index'
+import { cast, connect, format, hex, DatabaseError } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
@@ -143,7 +143,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1', 'null'],
       types: { ':vtg1': 'INT32', null: 'NULL' },
       fields: [
@@ -192,7 +192,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: ['null'],
       types: { null: 'NULL' },
       fields: [{ name: 'null', type: 'NULL' }],
@@ -238,7 +238,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT32' },
       rows: [[1]],
@@ -273,7 +273,7 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const query = 'CREATE TABLE `foo` (bar json);'
-    const want: ExecutedQuery = {
+    const want = {
       headers: [],
       types: {},
       fields: [],
@@ -303,7 +303,7 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const query = "UPDATE `foo` SET bar='planetscale'"
-    const want: ExecutedQuery = {
+    const want = {
       headers: [],
       types: {},
       fields: [],
@@ -334,7 +334,7 @@ describe('execute', () => {
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
     const query = "INSERT INTO `foo` (bar) VALUES ('planetscale');"
-    const want: ExecutedQuery = {
+    const want = {
       headers: [],
       types: {},
       fields: [],
@@ -418,7 +418,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       rows: [{ ':vtg1': 1 }],
       types: { ':vtg1': 'INT32' },
@@ -452,7 +452,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT32' },
       fields: [{ name: ':vtg1', type: 'INT32' }],
@@ -486,7 +486,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT64' },
       fields: [{ name: ':vtg1', type: 'INT64' }],
@@ -521,7 +521,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: [':vtg1'],
       types: { ':vtg1': 'INT64' },
       fields: [{ name: ':vtg1', type: 'INT64' }],
@@ -558,7 +558,7 @@ describe('execute', () => {
       timing: 1
     }
 
-    const want: ExecutedQuery = {
+    const want = {
       headers: ['document'],
       types: { document: 'JSON' },
       fields: [{ name: 'document', type: 'JSON' }],
