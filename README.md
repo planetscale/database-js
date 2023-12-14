@@ -1,10 +1,12 @@
-# PlanetScale Serverless Driver for JavaScript
+![PlanetScale serverless driver for JavaScript](https://github.com/planetscale/database-js/assets/440926/0dfab33f-b01f-4814-ae40-c5fe5cbe94e3)
+
+# PlanetScale serverless driver for JavaScript
 
 A Fetch API-compatible PlanetScale database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions
 
 ## Installation
 
-```
+```sh
 npm install @planetscale/database
 ```
 
@@ -224,10 +226,14 @@ const arrays = conn.execute(query, [1], { as: 'array' })
 
 ## Development
 
-```
+```sh
 npm install
 npm test
 ```
+
+## Need help?
+
+Get help from [the PlanetScale support team](https://support.planetscale.com/), or [join our community on Discord](https://discord.gg/EqrcEf2dGv) or [GitHub discussion board](https://github.com/planetscale/discussion/discussions) to see how others are using PlanetScale.
 
 ## License
 
