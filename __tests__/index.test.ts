@@ -3,8 +3,7 @@ import { cast, connect, format, hex, ExecutedQuery, DatabaseError } from '../dis
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
-const mockHost = 'https://example.com'
-
+const mockHosts = ['http://localhost:8080', 'https://example.com']
 const CREATE_SESSION_PATH = '/psdb.v1alpha1.Database/CreateSession'
 const EXECUTE_PATH = '/psdb.v1alpha1.Database/Execute'
 const config = {
@@ -20,7 +19,7 @@ mockAgent.disableNetConnect()
 setGlobalDispatcher(mockAgent)
 
 // Provide the base url to the request
-const mockPool = mockAgent.get(mockHost)
+const mockPool = mockAgent.get((value) => mockHosts.includes(value))
 const mockSession = 42
 
 describe('config', () => {
@@ -37,6 +36,23 @@ describe('config', () => {
     })
 
     const connection = connect({ fetch, url: 'mysql://someuser:password@example.com' })
+    const got = await connection.execute('SELECT 1 from dual;')
+    expect(got).toBeDefined()
+  })
+
+  test('parses database URL when using HTTP', async () => {
+    const mockResponse = {
+      session: mockSession,
+      result: { fields: [], rows: [] }
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
+      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
+      return mockResponse
+    })
+
+    const connection = connect({ fetch, url: 'http://someuser:password@localhost:8080' })
     const got = await connection.execute('SELECT 1 from dual;')
     expect(got).toBeDefined()
   })
@@ -592,5 +608,14 @@ describe('hex', () => {
 describe('cast', () => {
   test('casts int to number', () => {
     expect(cast({ name: 'test', type: 'INT8' }, '12')).toEqual(12)
+  })
+
+  test('casts float to number', () => {
+    expect(cast({ name: 'test', type: 'FLOAT32' }, '2.32')).toEqual(2.32)
+    expect(cast({ name: 'test', type: 'FLOAT64' }, '2.32')).toEqual(2.32)
+  })
+
+  test('casts JSON string to JSON object', () => {
+    expect(cast({ name: 'test', type: 'JSON' }, '{ "foo": "bar" }')).toStrictEqual({ foo: 'bar' })
   })
 })
