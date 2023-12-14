@@ -4,6 +4,8 @@ export { hex } from './text.js'
 import { decode } from './text.js'
 import { Version } from './version.js'
 
+type Row<T extends ExecuteAs = 'object'> = T extends 'array' ? any[] : T extends 'object' ? Record<string, any> : never
+
 interface VitessError {
   message: string
   code: string
@@ -22,7 +24,7 @@ export class DatabaseError extends Error {
 
 type Types = Record<string, string>
 
-export interface ExecutedQuery<T> {
+export interface ExecutedQuery<T = Row<'array'> | Row<'object'>> {
   headers: string[]
   types: Types
   rows: T[]
@@ -98,9 +100,9 @@ interface QueryResult {
   rows?: QueryResultRow[]
 }
 
-type ExecuteArgs = object | any[] | null
-
 type ExecuteAs = 'array' | 'object'
+
+type ExecuteArgs = object | any[] | null
 
 export class Client {
   private config: Config
@@ -113,17 +115,17 @@ export class Client {
     return this.connection().transaction(fn)
   }
 
-  async execute<T = Record<string, any>>(
+  async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
     options?: { as?: 'object'; cast?: Cast }
   ): Promise<ExecutedQuery<T>>
-  async execute<T = any[]>(
+  async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
     options: { as: 'array'; cast?: Cast }
   ): Promise<ExecutedQuery<T>>
-  async execute<T = any>(
+  async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
@@ -145,17 +147,17 @@ class Tx {
     this.conn = conn
   }
 
-  async execute<T = Record<string, any>>(
+  async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
     options?: { as?: 'object'; cast?: Cast }
   ): Promise<ExecutedQuery<T>>
-  async execute<T = any[]>(
+  async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
     options: { as: 'array'; cast?: Cast }
   ): Promise<ExecutedQuery<T>>
-  async execute<T = any>(
+  async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
@@ -218,17 +220,17 @@ export class Connection {
     await this.createSession()
   }
 
-  async execute<T = Record<string, any>>(
+  async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
     options?: { as?: 'object'; cast?: Cast }
   ): Promise<ExecutedQuery<T>>
-  async execute<T = any[]>(
+  async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
     options: { as: 'array'; cast?: Cast }
   ): Promise<ExecutedQuery<T>>
-  async execute<T = any>(
+  async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
@@ -326,7 +328,7 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseArrayRow<T = any[]>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
+function parseArrayRow<T = Row<'array'>>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
 
   return fields.map((field, ix) => {
@@ -334,7 +336,7 @@ function parseArrayRow<T = any[]>(fields: Field[], rawRow: QueryResultRow, cast:
   }) as T
 }
 
-function parseObjectRow<T = Record<string, any>>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
+function parseObjectRow<T = Row<'object'>>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
 
   return fields.reduce((acc, field, ix) => {
