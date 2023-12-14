@@ -1,4 +1,4 @@
-![PlanetScale serverless driver for JavaScript](https://github.com/planetscale/database-js/assets/440926/cafa3dec-49e8-4176-b12e-1bea50dcf814)
+![PlanetScale serverless driver for JavaScript](https://github.com/planetscale/database-js/assets/440926/0dfab33f-b01f-4814-ae40-c5fe5cbe94e3)
 
 # PlanetScale serverless driver for JavaScript
 
