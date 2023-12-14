@@ -44,7 +44,7 @@ function sanitize(value: Value): string {
   }
 
   if (value instanceof Date) {
-    return quote(value.toISOString().replace('Z', ''))
+    return quote(value.toISOString().slice(0, -1))
   }
 
   return quote(value.toString())
