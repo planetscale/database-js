@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { cast, connect, format, hex, DatabaseError } from '../dist/index'
+import { cast, connect, format, hex, DatabaseError, type Cast } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
@@ -29,7 +29,7 @@ describe('config', () => {
       result: { fields: [], rows: [] }
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
       expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
       return mockResponse
@@ -46,7 +46,7 @@ describe('config', () => {
       result: { fields: [], rows: [] }
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
       expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
       return mockResponse
@@ -158,7 +158,7 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(null)
@@ -170,7 +170,7 @@ describe('execute', () => {
 
     expect(got).toEqual(want)
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(mockSession)
@@ -204,7 +204,7 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(null)
@@ -216,7 +216,7 @@ describe('execute', () => {
 
     expect(got).toEqual(want)
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(mockSession)
@@ -250,7 +250,7 @@ describe('execute', () => {
       insertId: '0'
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       expect(opts.headers['Authorization']).toMatch(/Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.session).toEqual(null)
@@ -430,7 +430,7 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.query).toEqual(want.statement)
       return mockResponse
@@ -464,7 +464,7 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.query).toEqual(want.statement)
       return mockResponse
@@ -498,13 +498,13 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.query).toEqual(want.statement)
       return mockResponse
     })
 
-    const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
+    const inflate: Cast = (field, value) => (field.type === 'INT64' ? BigInt(value as string) : value)
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual')
 
@@ -533,13 +533,13 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.query).toEqual(want.statement)
       return mockResponse
     })
-    const connInflate = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
-    const inflate = (field, value) => (field.type === 'INT64' ? BigInt(value) : value)
+    const connInflate: Cast = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
+    const inflate: Cast = (field, value) => (field.type === 'INT64' ? BigInt(value as string) : value)
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual', {}, { cast: connInflate })
 
@@ -570,7 +570,7 @@ describe('execute', () => {
       time: 1000
     }
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts) => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
       expect(bodyObj.query).toEqual(want.statement)
       return mockResponse

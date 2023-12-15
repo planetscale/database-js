@@ -36,6 +36,8 @@ export interface ExecutedQuery<T = Row<'array'> | Row<'object'>> {
   time: number
 }
 
+type Fetch = (input: string, init?: Req) => Promise<Res>
+
 type Req = {
   method: string
   headers: Record<string, string>
@@ -52,14 +54,15 @@ type Res = {
 }
 
 export type Cast = typeof cast
+type Format = typeof format
 
 export interface Config {
   url?: string
   username?: string
   password?: string
   host?: string
-  fetch?: (input: string, init?: Req) => Promise<Res>
-  format?: (query: string, args: any) => string
+  fetch?: Fetch
+  format?: Format
   cast?: Cast
 }
 
@@ -102,7 +105,7 @@ interface QueryResult {
 
 type ExecuteAs = 'array' | 'object'
 
-type ExecuteArgs = object | any[] | null
+type ExecuteArgs = Record<string, any> | any[] | null
 
 export class Client {
   private config: Config
@@ -178,16 +181,18 @@ function buildURL(url: URL): string {
 
 export class Connection {
   private config: Config
+  private fetch: Fetch
   private session: QuerySession | null
   private url: string
 
   constructor(config: Config) {
-    this.session = null
-    this.config = { ...config }
-
-    if (typeof fetch !== 'undefined') {
-      this.config.fetch ||= fetch
+    if (!config.fetch && typeof fetch === 'undefined') {
+      throw new Error('No `fetch` implementation available')
     }
+
+    this.config = { ...config }
+    this.fetch = config.fetch || fetch
+    this.session = null
 
     if (config.url) {
       const url = new URL(config.url)
@@ -240,7 +245,10 @@ export class Connection {
     const formatter = this.config.format || format
     const sql = args ? formatter(query, args) : query
 
-    const saved = await postJSON<QueryExecuteResponse>(this.config, url, { query: sql, session: this.session })
+    const saved = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url, {
+      query: sql,
+      session: this.session
+    })
 
     const { result, session, error, timing } = saved
     if (session) {
@@ -268,7 +276,7 @@ export class Connection {
     const rows = result ? parse<T>(result, castFn, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
-    const typeByName = (acc, { name, type }) => ({ ...acc, [name]: type })
+    const typeByName = (acc: Types, { name, type }: Field) => ({ ...acc, [name]: type })
     const types = fields.reduce<Types>(typeByName, {})
     const timingSeconds = timing ?? 0
 
@@ -287,15 +295,14 @@ export class Connection {
 
   private async createSession(): Promise<QuerySession> {
     const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
-    const { session } = await postJSON<QueryExecuteResponse>(this.config, url)
+    const { session } = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url)
     this.session = session
     return session
   }
 }
 
-async function postJSON<T>(config: Config, url: string | URL, body = {}): Promise<T> {
+async function postJSON<T>(config: Config, fetch: Fetch, url: string | URL, body = {}): Promise<T> {
   const auth = btoa(`${config.username}:${config.password}`)
-  const { fetch } = config
   const response = await fetch(url.toString(), {
     method: 'POST',
     body: JSON.stringify(body),
@@ -328,7 +335,7 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseArrayRow<T = Row<'array'>>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
+function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
 
   return fields.map((field, ix) => {
@@ -336,17 +343,20 @@ function parseArrayRow<T = Row<'array'>>(fields: Field[], rawRow: QueryResultRow
   }) as T
 }
 
-function parseObjectRow<T = Row<'object'>>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
+function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
 
-  return fields.reduce((acc, field, ix) => {
-    acc[field.name] = cast(field, row[ix])
-    return acc
-  }, {} as T)
+  return fields.reduce(
+    (acc, field, ix) => {
+      acc[field.name] = cast(field, row[ix])
+      return acc
+    },
+    {} as Record<string, ReturnType<Cast>>
+  ) as T
 }
 
 function parse<T>(result: QueryResult, cast: Cast, returnAs: ExecuteAs): T[] {
-  const fields = result.fields
+  const fields = result.fields ?? []
   const rows = result.rows ?? []
   return rows.map((row) =>
     returnAs === 'array' ? parseArrayRow<T>(fields, row, cast) : parseObjectRow<T>(fields, row, cast)
