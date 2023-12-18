@@ -105,7 +105,7 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = object | any[] | null
 
 export class Client {
-  private config: Config
+  public readonly config: Config
 
   constructor(config: Config) {
     this.config = config
@@ -177,7 +177,7 @@ function buildURL(url: URL): string {
 }
 
 export class Connection {
-  private config: Config
+  public readonly config: Config
   private session: QuerySession | null
   private url: string
 

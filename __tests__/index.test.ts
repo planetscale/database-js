@@ -56,6 +56,18 @@ describe('config', () => {
     const got = await connection.execute('SELECT 1 from dual;')
     expect(got).toBeDefined()
   })
+
+  test('exposes config as a public field', async () => {
+    const config = { url: 'mysql://someuser:password@example.com/db' }
+    const connection = connect(config)
+    expect(connection.config).toEqual({
+      fetch: expect.any(Function),
+      host: 'example.com',
+      username: 'someuser',
+      password: 'password',
+      url: 'mysql://someuser:password@example.com/db'
+    })
+  })
 })
 
 describe('transaction', () => {
