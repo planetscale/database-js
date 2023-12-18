@@ -57,14 +57,16 @@ describe('config', () => {
     expect(got).toBeDefined()
   })
 
-  test('exposes database url', async () => {
-    const connection = connect({ fetch, url: 'mysql://someuser:password@example.com' })
-    expect(connection.connectionUrl).toBe('mysql://someuser:password@example.com')
-  })
-
-  test('exposes database url', async () => {
+  test('exposes config as a public field', async () => {
+    const config = { url: 'mysql://someuser:password@example.com/db' }
     const connection = connect(config)
-    expect(connection.connectionUrl).toBe('https://example.com/')
+    expect(connection.config).toEqual({
+      fetch: expect.any(Function),
+      host: 'example.com',
+      username: 'someuser',
+      password: 'password',
+      url: 'mysql://someuser:password@example.com/db'
+    })
   })
 })
 

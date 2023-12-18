@@ -105,7 +105,7 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = object | any[] | null
 
 export class Client {
-  private config: Config
+  public readonly config: Config
 
   constructor(config: Config) {
     this.config = config
@@ -135,10 +135,6 @@ export class Client {
 
   connection(): Connection {
     return new Connection(this.config)
-  }
-
-  get connectionUrl() {
-    return getUrlFromConfig(this.config)
   }
 }
 
@@ -180,12 +176,8 @@ function buildURL(url: URL): string {
   return new URL(url.pathname, `${scheme}${url.host}`).toString()
 }
 
-function getUrlFromConfig(config: Config): string {
-  return config.url ?? new URL(`https://${config.host}`).toString()
-}
-
 export class Connection {
-  private config: Config
+  public readonly config: Config
   private session: QuerySession | null
   private url: string
 
@@ -291,10 +283,6 @@ export class Connection {
       statement: sql,
       time: timingSeconds * 1000
     }
-  }
-
-  get connectionUrl() {
-    return getUrlFromConfig(this.config)
   }
 
   private async createSession(): Promise<QuerySession> {
