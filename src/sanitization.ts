@@ -1,7 +1,7 @@
 type Stringable = { toString: () => string }
 type Value = null | undefined | number | boolean | string | Array<Value> | Date | Stringable
 
-export function format(query: string, values: Value[] | Record<string, Value>): string {
+export function format(query: string, values: Record<string, any> | any[]): string {
   return Array.isArray(values) ? replacePosition(query, values) : replaceNamed(query, values)
 }
 
