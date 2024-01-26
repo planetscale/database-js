@@ -27,7 +27,7 @@ function sanitize(value: Value): string {
     return 'null'
   }
 
-  if (typeof value === 'number') {
+  if (['number', 'bigint'].includes(typeof value)) {
     return String(value)
   }
 

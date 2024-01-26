@@ -36,6 +36,12 @@ describe('sanitization', () => {
       expect(format(query, [12, 42])).toEqual(expected)
     })
 
+    test('formats bigint values', () => {
+      const query = 'select 1 from user where id=? and id2=? and id3=?'
+      const expected = 'select 1 from user where id=12 and id2=42 and id3=9223372036854775807'
+      expect(format(query, [12n, 42n, 9223372036854775807n])).toEqual(expected)
+    })
+
     test('formats string values', () => {
       const query = 'select 1 from user where state=?'
       const expected = "select 1 from user where state='active'"
