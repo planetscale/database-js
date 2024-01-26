@@ -186,12 +186,8 @@ export class Connection {
   private url: string
 
   constructor(config: Config) {
-    if (!config.fetch && typeof fetch === 'undefined') {
-      throw new Error('No `fetch` implementation available')
-    }
-
-    this.config = { ...config }
-    this.fetch = config.fetch || fetch
+    this.config = config
+    this.fetch = config.fetch || fetch!
     this.session = null
 
     if (config.url) {
