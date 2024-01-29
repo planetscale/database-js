@@ -55,6 +55,7 @@ type Res = {
 
 export type Cast = typeof cast
 type Format = typeof format
+type Use = string
 
 export interface Config {
   url?: string
@@ -89,6 +90,11 @@ export interface Field {
 
 type QuerySession = unknown
 
+type QuerySessionOptions = {
+  set?: Record<string, any>
+  use?: Use
+}
+
 interface QueryExecuteResponse {
   session: QuerySession
   result: QueryResult | null
@@ -108,9 +114,9 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = Record<string, any> | any[] | null
 
 type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
-  ? { as?: 'object'; cast?: Cast }
+  ? { as?: 'object'; cast?: Cast; use?: Use }
   : T extends 'object'
-  ? { as: 'array'; cast?: Cast }
+  ? { as: 'array'; cast?: Cast; use?: Use }
   : never
 
 export class Client {
@@ -120,8 +126,8 @@ export class Client {
     this.config = config
   }
 
-  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    return this.connection().transaction(fn)
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>, session?: QuerySessionOptions): Promise<T> {
+    return this.connection(session).transaction(fn)
   }
 
   async execute<T = Row<'object'>>(
@@ -139,11 +145,12 @@ export class Client {
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
   ): Promise<ExecutedQuery<T>> {
-    return this.connection().execute<T>(query, args, options)
+    const { as, cast, ...session } = options
+    return this.connection(session).execute<T>(query, args, options)
   }
 
-  connection(): Connection {
-    return new Connection(this.config)
+  connection(session?: QuerySessionOptions): Connection {
+    return new Connection(this.config, session)
   }
 }
 
@@ -189,12 +196,24 @@ export class Connection {
   public readonly config: Config
   private fetch: Fetch
   private session: QuerySession | null
+  private sessionOptions?: QuerySessionOptions
   private url: string
 
-  constructor(config: Config) {
+  /**
+   * Alternative to a deferred session is to create a session on initialize.
+   */
+
+  // static async withSession(config: Config, sessionOptions: QuerySessionOptions) {
+  //   const session = await this.createSession(sessionOptions)
+  //
+  //   return new Connection(config, session, sessionOptions)
+  // }
+
+  constructor(config: Config, sessionOptions?: QuerySessionOptions) {
     this.config = config
     this.fetch = config.fetch || fetch!
     this.session = null
+    this.sessionOptions = sessionOptions
 
     if (config.url) {
       const url = new URL(config.url)
@@ -208,7 +227,7 @@ export class Connection {
   }
 
   async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    const conn = new Connection(this.config) // Create a new connection specifically for the transaction
+    const conn = new Connection(this.config, this.sessionOptions) // Create a new connection specifically for the transaction
     const tx = new Tx(conn)
 
     try {
@@ -224,7 +243,7 @@ export class Connection {
   }
 
   async refresh(): Promise<void> {
-    await this.createSession()
+    this.session = await this.createSession()
   }
 
   async execute<T = Row<'object'>>(
@@ -242,6 +261,10 @@ export class Connection {
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
   ): Promise<ExecutedQuery<T>> {
+    if (this.sessionOptions && !this.session) {
+      this.session = await this.createSession()
+    }
+
     const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
 
     const formatter = this.config.format || format
@@ -297,7 +320,13 @@ export class Connection {
 
   private async createSession(): Promise<QuerySession> {
     const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
-    const { session } = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url)
+    const options = this.sessionOptions || {}
+
+    const { session } = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url, {
+      set: options.set,
+      use: options.use
+    })
+
     this.session = session
     return session
   }
