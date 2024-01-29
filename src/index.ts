@@ -55,7 +55,6 @@ type Res = {
 
 export type Cast = typeof cast
 type Format = typeof format
-type Use = string
 
 export interface Config {
   url?: string
@@ -92,7 +91,7 @@ type QuerySession = unknown
 
 type QuerySessionOptions = {
   set?: Record<string, any>
-  use?: Use
+  use?: string
 }
 
 interface QueryExecuteResponse {
@@ -114,10 +113,12 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = Record<string, any> | any[] | null
 
 type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
-  ? { as?: 'object'; cast?: Cast; use?: Use }
+  ? { as?: 'object'; cast?: Cast }
   : T extends 'object'
-  ? { as: 'array'; cast?: Cast; use?: Use }
+  ? { as: 'array'; cast?: Cast }
   : never
+
+type ClientExecuteOptions<T extends ExecuteAs = 'object'> = ExecuteOptions<T> & QuerySessionOptions
 
 export class Client {
   public readonly config: Config
@@ -133,12 +134,12 @@ export class Client {
   async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
-    options?: ExecuteOptions<'object'>
+    options?: ClientExecuteOptions<'object'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
-    options: ExecuteOptions<'array'>
+    options: ClientExecuteOptions<'array'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
