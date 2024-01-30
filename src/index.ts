@@ -107,6 +107,12 @@ type ExecuteAs = 'array' | 'object'
 
 type ExecuteArgs = Record<string, any> | any[] | null
 
+type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
+  ? { as?: 'object'; cast?: Cast }
+  : T extends 'object'
+  ? { as: 'array'; cast?: Cast }
+  : never
+
 export class Client {
   public readonly config: Config
 
@@ -121,12 +127,12 @@ export class Client {
   async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
-    options?: { as?: 'object'; cast?: Cast }
+    options?: ExecuteOptions<'object'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
-    options: { as: 'array'; cast?: Cast }
+    options: ExecuteOptions<'array'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
@@ -153,12 +159,12 @@ class Tx {
   async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
-    options?: { as?: 'object'; cast?: Cast }
+    options?: ExecuteOptions<'object'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
-    options: { as: 'array'; cast?: Cast }
+    options: ExecuteOptions<'array'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
@@ -224,12 +230,12 @@ export class Connection {
   async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
-    options?: { as?: 'object'; cast?: Cast }
+    options?: ExecuteOptions<'object'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
-    options: { as: 'array'; cast?: Cast }
+    options: ExecuteOptions<'array'>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
