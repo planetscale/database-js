@@ -47,6 +47,10 @@ function sanitize(value: Value): string {
     return quote(value.toISOString().slice(0, -1))
   }
 
+  if (value instanceof Buffer) {
+    return `0x${value.toString('hex')}`
+  }
+
   return quote(value.toString())
 }
 
