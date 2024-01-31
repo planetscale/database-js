@@ -404,12 +404,13 @@ export function cast(field: Field, value: string | null): any {
     case 'TIME':
     case 'DATETIME':
     case 'TIMESTAMP':
-    case 'BLOB':
     case 'BIT':
-    case 'VARBINARY':
     case 'BINARY':
     case 'GEOMETRY':
       return value
+    case 'BLOB':
+    case 'VARBINARY':
+      return new Buffer(value, "binary");
     case 'JSON':
       return JSON.parse(decode(value))
     default:
