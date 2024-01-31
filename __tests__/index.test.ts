@@ -626,6 +626,11 @@ describe('cast', () => {
     expect(cast({ name: 'test', type: 'FLOAT64' }, '2.32')).toEqual(2.32)
   })
 
+  test('casts binary data to array of 8-bit unsigned integers', () => {
+    expect(cast({ name: 'test', type: 'BLOB' }, '')).toEqual(new Uint8Array([]))
+    expect(cast({ name: 'test', type: 'BLOB' }, 'Å')).toEqual(new Uint8Array([197]))
+  })
+
   test('casts JSON string to JSON object', () => {
     expect(cast({ name: 'test', type: 'JSON' }, '{ "foo": "bar" }')).toStrictEqual({ foo: 'bar' })
   })
