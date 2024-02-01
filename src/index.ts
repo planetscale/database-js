@@ -55,7 +55,8 @@ type Res = {
 
 export type Cast = typeof cast
 type Format = typeof format
-type Variables = Record<string, any>
+type Variable = '@@boost_cached_queries'
+type Variables = Record<Variable, string>
 
 export interface Config {
   url?: string
