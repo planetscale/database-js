@@ -393,7 +393,7 @@ export function cast(field: Field, value: string | null): any {
     case 'UINT24':
     case 'UINT32':
     case 'YEAR':
-      return value ? parseInt(value, 10) : value
+      return parseInt(value, 10)
     case 'FLOAT32':
     case 'FLOAT64':
       return parseFloat(value)
