@@ -69,6 +69,11 @@ export interface Config {
   cast?: Cast
 }
 
+type Session = {
+  database?: string
+  variables?: Variables
+}
+
 interface QueryResultRow {
   lengths: string[]
   values?: string
@@ -123,8 +128,8 @@ export class Client {
     this.config = config
   }
 
-  async transaction<T>(fn: (tx: Transaction) => Promise<T>, override?: Config): Promise<T> {
-    return this.connection().transaction(fn, override)
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>, override?: Session): Promise<T> {
+    return this.connection(override).transaction(fn)
   }
 
   async execute<T = Row<'object'>>(
@@ -145,7 +150,7 @@ export class Client {
     return this.connection().execute<T>(query, args, options)
   }
 
-  connection(override?: Config): Connection {
+  connection(override?: Session): Connection {
     return new Connection({ ...this.config, ...override })
   }
 }
@@ -210,7 +215,7 @@ export class Connection {
     }
   }
 
-  async transaction<T>(fn: (tx: Transaction) => Promise<T>, override?: Config): Promise<T> {
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>, override?: Session): Promise<T> {
     const conn = new Connection({ ...this.config, ...override }) // Create a new connection specifically for the transaction
     const tx = new Tx(conn)
 
