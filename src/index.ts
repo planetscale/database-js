@@ -168,12 +168,12 @@ class Tx {
   async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
-    options?: ExecuteOptions<'object'>
+    options?: Omit<ExecuteOptions<'object'>, keyof Session>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
-    options: ExecuteOptions<'array'>
+    options: Omit<ExecuteOptions<'array'>, keyof Session>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
