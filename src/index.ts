@@ -1,7 +1,7 @@
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
+import { decode, uint8Array } from './text.js'
 export { hex } from './text.js'
-import { decode } from './text.js'
 import { Version } from './version.js'
 
 type Row<T extends ExecuteAs = 'object'> = T extends 'array' ? any[] : T extends 'object' ? Record<string, any> : never
@@ -379,7 +379,7 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
 }
 
 export function cast(field: Field, value: string | null): any {
-  if (value === '' || value == null) {
+  if (value == null) {
     return value
   }
 
@@ -404,14 +404,15 @@ export function cast(field: Field, value: string | null): any {
     case 'TIME':
     case 'DATETIME':
     case 'TIMESTAMP':
+      return value
     case 'BLOB':
     case 'BIT':
     case 'VARBINARY':
     case 'BINARY':
     case 'GEOMETRY':
-      return value
+      return uint8Array(value)
     case 'JSON':
-      return JSON.parse(decode(value))
+      return value ? JSON.parse(decode(value)) : value
     default:
       return decode(value)
   }

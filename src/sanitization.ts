@@ -1,3 +1,5 @@
+import { uint8ArrayToHex } from './text.js'
+
 type Stringable = { toString: () => string }
 type Value = null | undefined | number | boolean | string | Array<Value> | Date | Stringable
 
@@ -45,6 +47,10 @@ function sanitize(value: Value): string {
 
   if (value instanceof Date) {
     return quote(value.toISOString().slice(0, -1))
+  }
+
+  if (value instanceof Uint8Array) {
+    return uint8ArrayToHex(value)
   }
 
   return quote(value.toString())
