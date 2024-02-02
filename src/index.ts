@@ -180,7 +180,8 @@ class Tx {
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
   ): Promise<ExecutedQuery<T>> {
-    return this.conn.execute<T>(query, args, options)
+    const { database: _, variables: __, ...executeOptions } = options
+    return this.conn.execute<T>(query, args, executeOptions)
   }
 }
 
