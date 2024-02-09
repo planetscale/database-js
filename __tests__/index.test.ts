@@ -557,6 +557,72 @@ describe('execute', () => {
     expect(got).toEqual(want)
   })
 
+  test('opts out of default cast function', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT32' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      },
+      timing: 1
+    }
+
+    const want = {
+      headers: [':vtg1'],
+      types: { ':vtg1': 'INT32' },
+      fields: [{ name: ':vtg1', type: 'INT32' }],
+      rows: [{ ':vtg1': '1' }],
+      size: 1,
+      insertId: '0',
+      rowsAffected: 0,
+      statement: 'select 1 from dual',
+      time: 1000
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+    const connection = connect({ ...config, cast: null })
+    const got = await connection.execute('select 1 from dual')
+
+    expect(got).toEqual(want)
+  })
+
+  test('opts out of default cast function when it is passed to execute', async () => {
+    const mockResponse = {
+      session: null,
+      result: {
+        fields: [{ name: ':vtg1', type: 'INT32' }],
+        rows: [{ lengths: ['1'], values: 'MQ==' }]
+      },
+      timing: 1
+    }
+
+    const want = {
+      headers: [':vtg1'],
+      types: { ':vtg1': 'INT32' },
+      fields: [{ name: ':vtg1', type: 'INT32' }],
+      rows: [{ ':vtg1': '1' }],
+      size: 1,
+      insertId: '0',
+      rowsAffected: 0,
+      statement: 'select 1 from dual',
+      time: 1000
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
+      const bodyObj = JSON.parse(opts.body.toString())
+      expect(bodyObj.query).toEqual(want.statement)
+      return mockResponse
+    })
+    const connection = connect(config)
+    const got = await connection.execute('select 1 from dual', null, { cast: null })
+
+    expect(got).toEqual(want)
+  })
+
   test('parses json column values', async () => {
     const document = JSON.stringify({ answer: 42 })
 

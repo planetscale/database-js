@@ -63,7 +63,7 @@ export interface Config {
   host?: string
   fetch?: Fetch
   format?: Format
-  cast?: Cast
+  cast?: Cast | null
 }
 
 interface QueryResultRow {
@@ -108,9 +108,9 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = Record<string, any> | any[] | null
 
 type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
-  ? { as?: 'object'; cast?: Cast }
+  ? { as?: 'object'; cast?: Cast | null }
   : T extends 'object'
-  ? { as: 'array'; cast?: Cast }
+  ? { as: 'array'; cast?: Cast | null }
   : never
 
 export class Client {
@@ -274,7 +274,7 @@ export class Connection {
       field.type ||= 'NULL'
     }
 
-    const castFn = options.cast || this.config.cast || cast
+    const castFn = [options.cast, this.config.cast, cast].find((fn) => fn !== undefined)
     const rows = result ? parse<T>(result, castFn, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
@@ -337,29 +337,43 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
+function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast | null): T {
   const row = decodeRow(rawRow)
 
   return fields.map((field, ix) => {
-    return cast(field, row[ix])
+    const value = row[ix]
+
+    if (cast) {
+      return cast(field, value)
+    } else {
+      return value
+    }
   }) as T
 }
 
-function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
+function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast | null): T {
   const row = decodeRow(rawRow)
 
   return fields.reduce(
     (acc, field, ix) => {
-      acc[field.name] = cast(field, row[ix])
+      const value = row[ix]
+
+      if (cast) {
+        acc[field.name] = cast(field, value)
+      } else {
+        acc[field.name] = value
+      }
+
       return acc
     },
     {} as Record<string, ReturnType<Cast>>
   ) as T
 }
 
-function parse<T>(result: QueryResult, cast: Cast, returnAs: ExecuteAs): T[] {
+function parse<T>(result: QueryResult, cast: Cast | null, returnAs: ExecuteAs): T[] {
   const fields = result.fields ?? []
   const rows = result.rows ?? []
+
   return rows.map((row) =>
     returnAs === 'array' ? parseArrayRow<T>(fields, row, cast) : parseObjectRow<T>(fields, row, cast)
   )
