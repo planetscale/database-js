@@ -629,6 +629,11 @@ describe('cast', () => {
   test('casts binary data to array of 8-bit unsigned integers', () => {
     expect(cast({ name: 'test', type: 'BLOB' }, '')).toEqual(new Uint8Array([]))
     expect(cast({ name: 'test', type: 'BLOB' }, 'Å')).toEqual(new Uint8Array([197]))
+    expect(cast({ name: 'test', type: 'VARBINARY' }, 'Å')).toEqual(new Uint8Array([197]))
+  })
+
+  test('casts binary text data to text', () => {
+    expect(cast({ name: 'test', type: 'VARBINARY', flags: 4225 }, 'table')).toEqual('table')
   })
 
   test('casts JSON string to JSON object', () => {
