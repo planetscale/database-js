@@ -53,7 +53,7 @@ type Res = {
   text(): Promise<string>
 }
 
-export type Cast = typeof cast
+export type Cast = ((field: Field, value: string | null) => any) | null
 type Format = typeof format
 
 export interface Config {
@@ -63,7 +63,7 @@ export interface Config {
   host?: string
   fetch?: Fetch
   format?: Format
-  cast?: Cast | null
+  cast?: Cast
 }
 
 interface QueryResultRow {
@@ -108,9 +108,9 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = Record<string, any> | any[] | null
 
 type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
-  ? { as?: 'object'; cast?: Cast | null }
+  ? { as?: 'object'; cast?: Cast }
   : T extends 'object'
-  ? { as: 'array'; cast?: Cast | null }
+  ? { as: 'array'; cast?: Cast }
   : never
 
 export class Client {
@@ -337,7 +337,7 @@ export function connect(config: Config): Connection {
   return new Connection(config)
 }
 
-function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast | null): T {
+function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
 
   return fields.map((field, ix) => {
@@ -351,7 +351,7 @@ function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast | 
   }) as T
 }
 
-function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast | null): T {
+function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
 
   return fields.reduce(
@@ -366,11 +366,11 @@ function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast |
 
       return acc
     },
-    {} as Record<string, ReturnType<Cast>>
+    {} as Record<string, any>
   ) as T
 }
 
-function parse<T>(result: QueryResult, cast: Cast | null, returnAs: ExecuteAs): T[] {
+function parse<T>(result: QueryResult, cast: Cast, returnAs: ExecuteAs): T[] {
   const fields = result.fields ?? []
   const rows = result.rows ?? []
 
