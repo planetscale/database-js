@@ -407,13 +407,28 @@ export function cast(field: Field, value: string | null): any {
       return value
     case 'BLOB':
     case 'BIT':
-    case 'VARBINARY':
-    case 'BINARY':
     case 'GEOMETRY':
       return uint8Array(value)
+    case 'BINARY':
+    case 'VARBINARY':
+      return isText(field) ? value : uint8Array(value)
     case 'JSON':
       return value ? JSON.parse(decode(value)) : value
     default:
       return decode(value)
   }
+}
+
+enum Flags {
+  NONE = 0,
+  ISINTEGRAL = 256,
+  ISUNSIGNED = 512,
+  ISFLOAT = 1024,
+  ISQUOTED = 2048,
+  ISTEXT = 4096,
+  ISBINARY = 8192
+}
+
+function isText(field: Field): boolean {
+  return ((field.flags ?? 0) & Flags.ISTEXT) === Flags.ISTEXT
 }
