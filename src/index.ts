@@ -419,6 +419,10 @@ export function cast(field: Field, value: string | null): any {
   }
 }
 
+/**
+ * https://github.com/planetscale/vitess-types/blob/main/src/vitess/query/v17/query.proto#L98-L106
+ */
+
 enum Flags {
   NONE = 0,
   ISINTEGRAL = 256,
