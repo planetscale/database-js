@@ -55,15 +55,24 @@ type Res = {
 
 export type Cast = typeof cast
 type Format = typeof format
+type Variable = '@@boost_cached_queries'
+type Variables = Record<Variable, string>
 
 export interface Config {
   url?: string
+  database?: string
   username?: string
   password?: string
   host?: string
+  variables?: Variables
   fetch?: Fetch
   format?: Format
   cast?: Cast
+}
+
+type Session = {
+  database?: string
+  variables?: Variables
 }
 
 interface QueryResultRow {
@@ -108,9 +117,9 @@ type ExecuteAs = 'array' | 'object'
 type ExecuteArgs = Record<string, any> | any[] | null
 
 type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
-  ? { as?: 'object'; cast?: Cast }
+  ? { as?: 'object'; cast?: Cast; database?: string; variables?: Variables }
   : T extends 'object'
-  ? { as: 'array'; cast?: Cast }
+  ? { as: 'array'; cast?: Cast; database?: string; variables?: Variables }
   : never
 
 export class Client {
@@ -120,8 +129,8 @@ export class Client {
     this.config = config
   }
 
-  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    return this.connection().transaction(fn)
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>, override?: Session): Promise<T> {
+    return this.connection(override).transaction(fn)
   }
 
   async execute<T = Row<'object'>>(
@@ -142,8 +151,8 @@ export class Client {
     return this.connection().execute<T>(query, args, options)
   }
 
-  connection(): Connection {
-    return new Connection(this.config)
+  connection(override?: Session): Connection {
+    return new Connection({ ...this.config, ...override })
   }
 }
 
@@ -159,19 +168,20 @@ class Tx {
   async execute<T = Row<'object'>>(
     query: string,
     args?: ExecuteArgs,
-    options?: ExecuteOptions<'object'>
+    options?: Omit<ExecuteOptions<'object'>, keyof Session>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'array'>>(
     query: string,
     args: ExecuteArgs,
-    options: ExecuteOptions<'array'>
+    options: Omit<ExecuteOptions<'array'>, keyof Session>
   ): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
   ): Promise<ExecutedQuery<T>> {
-    return this.conn.execute<T>(query, args, options)
+    const { database: _, variables: __, ...executeOptions } = options
+    return this.conn.execute<T>(query, args, executeOptions)
   }
 }
 
@@ -207,8 +217,8 @@ export class Connection {
     }
   }
 
-  async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    const conn = new Connection(this.config) // Create a new connection specifically for the transaction
+  async transaction<T>(fn: (tx: Transaction) => Promise<T>, override?: Session): Promise<T> {
+    const conn = new Connection({ ...this.config, ...override }) // Create a new connection specifically for the transaction
     const tx = new Tx(conn)
 
     try {
@@ -242,6 +252,9 @@ export class Connection {
     args: ExecuteArgs = null,
     options: any = { as: 'object' }
   ): Promise<ExecutedQuery<T>> {
+    console.log('// defaults', { database: this.config.database, variables: this.config.variables })
+    console.log('// overrides', { database: options.database, variables: options.variables })
+
     const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
 
     const formatter = this.config.format || format
