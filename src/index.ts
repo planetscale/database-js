@@ -1,3 +1,5 @@
+import { cast as experimental_cast } from './cast.js'
+export { experimental_cast }
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
 import { decode, uint8Array } from './text.js'
@@ -80,10 +82,12 @@ export interface Field {
   orgTable?: string | null
   database?: string | null
   orgName?: string | null
-
   columnLength?: number | null
   charset?: number | null
+  decimals?: number
   flags?: number | null
+
+  // used?
   columnType?: string | null
 }
 

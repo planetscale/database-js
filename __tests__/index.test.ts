@@ -633,6 +633,7 @@ describe('cast', () => {
   })
 
   test('casts binary text data to text', () => {
+    // expect(cast({ name: 'test', type: 'BLOB', flags: 4241 }, 'varchar(191)')).toEqual('varchar(191)')
     expect(cast({ name: 'test', type: 'VARBINARY', flags: 4225 }, 'table')).toEqual('table')
   })
 
