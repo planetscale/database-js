@@ -8,7 +8,6 @@ run_sql() {
   curl -s -u $MYSQL_USER:$MYSQL_PWD \
   -d@- -H'content-type: application/json' \
   https://$MYSQL_HOST/psdb.v1alpha1.Database/Execute | jq .result > $name.json
-  jq -c . $name.json > $name-compact.json
   jq . $name.json
 }
 
