@@ -1,22 +1,23 @@
 import SqlString from 'sqlstring'
-import { cast, connect, format, hex, DatabaseError, type Cast } from '../dist/index'
+import { connect, format, hex, DatabaseError, type Cast } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
 const mockHosts = ['http://localhost:8080', 'https://example.com']
 const CREATE_SESSION_PATH = '/psdb.v1alpha1.Database/CreateSession'
 const EXECUTE_PATH = '/psdb.v1alpha1.Database/Execute'
+
+const mockAgent = new MockAgent()
+mockAgent.disableNetConnect()
+
+setGlobalDispatcher(mockAgent)
+
 const config = {
   username: 'someuser',
   password: 'password',
   host: 'example.com',
   fetch
 }
-
-const mockAgent = new MockAgent()
-mockAgent.disableNetConnect()
-
-setGlobalDispatcher(mockAgent)
 
 // Provide the base url to the request
 const mockPool = mockAgent.get((value) => mockHosts.includes(value))
@@ -613,30 +614,5 @@ describe('format', () => {
 describe('hex', () => {
   test('exports hex function', () => {
     expect(hex('\0')).toEqual('0x00')
-  })
-})
-
-describe('cast', () => {
-  test('casts int to number', () => {
-    expect(cast({ name: 'test', type: 'INT8' }, '12')).toEqual(12)
-  })
-
-  test('casts float to number', () => {
-    expect(cast({ name: 'test', type: 'FLOAT32' }, '2.32')).toEqual(2.32)
-    expect(cast({ name: 'test', type: 'FLOAT64' }, '2.32')).toEqual(2.32)
-  })
-
-  test('casts binary data to array of 8-bit unsigned integers', () => {
-    expect(cast({ name: 'test', type: 'BLOB' }, '')).toEqual(new Uint8Array([]))
-    expect(cast({ name: 'test', type: 'BLOB' }, 'Å')).toEqual(new Uint8Array([197]))
-    expect(cast({ name: 'test', type: 'VARBINARY' }, 'Å')).toEqual(new Uint8Array([197]))
-  })
-
-  test('casts binary text data to text', () => {
-    expect(cast({ name: 'test', type: 'VARBINARY', flags: 4225 }, 'table')).toEqual('table')
-  })
-
-  test('casts JSON string to JSON object', () => {
-    expect(cast({ name: 'test', type: 'JSON' }, '{ "foo": "bar" }')).toStrictEqual({ foo: 'bar' })
   })
 })

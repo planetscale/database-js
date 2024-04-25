@@ -1,0 +1,18 @@
+{
+  "fields": [
+    {
+      "name": "a",
+      "type": "VARCHAR",
+      "charset": 8,
+      "flags": 1
+    }
+  ],
+  "rows": [
+    {
+      "lengths": [
+        "2"
+      ],
+      "values": "w78="
+    }
+  ]
+}

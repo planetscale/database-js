@@ -1,6 +1,7 @@
+import { cast } from './cast.js'
+export { cast } from './cast.js'
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
-import { decode, uint8Array } from './text.js'
 export { hex } from './text.js'
 import { Version } from './version.js'
 
@@ -83,6 +84,7 @@ export interface Field {
 
   columnLength?: number | null
   charset?: number | null
+  decimals?: number
   flags?: number | null
   columnType?: string | null
 }
@@ -376,63 +378,4 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
     offset += width
     return splice
   })
-}
-
-export function cast(field: Field, value: string | null): any {
-  if (value == null) {
-    return value
-  }
-
-  switch (field.type) {
-    case 'INT8':
-    case 'INT16':
-    case 'INT24':
-    case 'INT32':
-    case 'UINT8':
-    case 'UINT16':
-    case 'UINT24':
-    case 'UINT32':
-    case 'YEAR':
-      return parseInt(value, 10)
-    case 'FLOAT32':
-    case 'FLOAT64':
-      return parseFloat(value)
-    case 'DECIMAL':
-    case 'INT64':
-    case 'UINT64':
-    case 'DATE':
-    case 'TIME':
-    case 'DATETIME':
-    case 'TIMESTAMP':
-      return value
-    case 'BLOB':
-    case 'BIT':
-    case 'GEOMETRY':
-      return uint8Array(value)
-    case 'BINARY':
-    case 'VARBINARY':
-      return isText(field) ? value : uint8Array(value)
-    case 'JSON':
-      return value ? JSON.parse(decode(value)) : value
-    default:
-      return decode(value)
-  }
-}
-
-/**
- * https://github.com/planetscale/vitess-types/blob/main/src/vitess/query/v17/query.proto#L98-L106
- */
-
-enum Flags {
-  NONE = 0,
-  ISINTEGRAL = 256,
-  ISUNSIGNED = 512,
-  ISFLOAT = 1024,
-  ISQUOTED = 2048,
-  ISTEXT = 4096,
-  ISBINARY = 8192
-}
-
-function isText(field: Field): boolean {
-  return ((field.flags ?? 0) & Flags.ISTEXT) === Flags.ISTEXT
 }
