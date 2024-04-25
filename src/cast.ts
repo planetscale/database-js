@@ -1,5 +1,5 @@
 import type { Field } from './index.js'
-import { decodeUTF8, uint8Array } from './text.js'
+import { decodeUtf8, uint8Array } from './text.js'
 
 /**
  * https://github.com/vitessio/vitess/blame/v19.0.3/go/mysql/json/helpers.go#L86-L112
@@ -38,7 +38,7 @@ export function cast(field: Field, value: any): any {
     return uint8Array(value)
   }
 
-  return decodeUTF8(value)
+  return decodeUtf8(value)
 }
 
 /**

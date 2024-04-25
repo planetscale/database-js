@@ -1,6 +1,6 @@
 const decoder = new TextDecoder('utf-8')
 
-export function decodeUTF8(text: string | null | undefined): string {
+export function decodeUtf8(text: string | null | undefined): string {
   return text ? decoder.decode(uint8Array(text)) : ''
 }
 

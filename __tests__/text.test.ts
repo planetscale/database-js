@@ -1,25 +1,25 @@
-import { decodeUTF8, hex, uint8Array, uint8ArrayToHex } from '../src/text'
+import { decodeUtf8, hex, uint8Array, uint8ArrayToHex } from '../src/text'
 
 describe('text', () => {
-  describe('decode', () => {
+  describe('decodeUtf8', () => {
     test('decodes ascii bytes', () => {
-      expect(decodeUTF8('a')).toEqual('a')
+      expect(decodeUtf8('a')).toEqual('a')
     })
 
     test('decodes empty string', () => {
-      expect(decodeUTF8('')).toEqual('')
+      expect(decodeUtf8('')).toEqual('')
     })
 
     test('decodes null value', () => {
-      expect(decodeUTF8(null)).toEqual('')
+      expect(decodeUtf8(null)).toEqual('')
     })
 
     test('decodes undefined value', () => {
-      expect(decodeUTF8(undefined)).toEqual('')
+      expect(decodeUtf8(undefined)).toEqual('')
     })
 
     test('decodes multi-byte characters', () => {
-      expect(decodeUTF8('\xF0\x9F\xA4\x94')).toEqual('🤔')
+      expect(decodeUtf8('\xF0\x9F\xA4\x94')).toEqual('🤔')
     })
   })
 
