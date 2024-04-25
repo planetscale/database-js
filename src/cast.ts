@@ -47,16 +47,20 @@ export function cast(field: Field, value: any): any {
  * https://github.com/planetscale/database-js/pull/90
  */
 
+const BIG_INT_FIELD_TYPES = ['INT64', 'UINT64']
+
 function isBigInt(field: Field) {
-  return field.type === 'INT64' || field.type === 'UINT64'
+  return BIG_INT_FIELD_TYPES.includes(field.type)
 }
 
 /**
  * https://github.com/vitessio/vitess/blob/v19.0.3/go/sqltypes/type.go#L103-L106
  */
 
+const DATE_OR_DATETIME_FIELD_TYPES = ['DATETIME', 'DATE', 'TIMESTAMP', 'TIME']
+
 function isDateOrTime(field: Field) {
-  return field.type === 'DATETIME' || field.type === 'DATE' || field.type === 'TIMESTAMP' || field.type === 'TIME'
+  return DATE_OR_DATETIME_FIELD_TYPES.includes(field.type)
 }
 
 function isDecimal(field: Field) {
