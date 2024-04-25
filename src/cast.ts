@@ -84,17 +84,11 @@ function isFloat(field: Field) {
 }
 
 /**
- * https://github.com/vitessio/vitess/blob/v19.0.3/go/mysql/collations/env.go#L190-L198
+ * https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_character_set.html
  */
 
-enum Charsets {
-  Utf8mb3ID = 33,
-  Utf8mb4ID = 255,
-  BinaryID = 63,
-  Utf8mb4BinID = 46,
-  Latin1Swedish = 8
-}
+const BinaryId = 63
 
 function isBinary(field: Field) {
-  return field.charset === Charsets.BinaryID
+  return field.charset === BinaryId
 }
