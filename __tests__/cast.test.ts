@@ -104,11 +104,11 @@ describe('cast', () => {
   })
 
   test('casts BLOB, BIT, GEOMETRY, BINARY, VARBINARY values', () => {
-    /** See e2e tests. */
+    /** See e2e tests in __tests__/golden.test.ts. */
   })
 
   test('casts BINARY, VARBINARY string values', () => {
-    /** See e2e tests. */
+    /** See e2e tests in __tests__/golden.test.ts. */
   })
 
   test('casts VARCHAR values', () => {
