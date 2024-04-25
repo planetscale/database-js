@@ -1,3 +1,5 @@
+import { cast } from './cast.js'
+export { cast } from './cast.js'
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
 import { decodeUTF8, uint8Array } from './text.js'
@@ -83,8 +85,8 @@ export interface Field {
 
   columnLength?: number | null
   charset?: number | null
+  decimals?: number
   flags?: number | null
-  columnType?: string | null
 }
 
 type QuerySession = unknown
@@ -376,47 +378,4 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
     offset += width
     return splice
   })
-}
-
-export function cast(field: Field, value: string | null): any {
-  if (value == null) {
-    return value
-  }
-
-  switch (field.type) {
-    case 'INT8':
-    case 'INT16':
-    case 'INT24':
-    case 'INT32':
-    case 'UINT8':
-    case 'UINT16':
-    case 'UINT24':
-    case 'UINT32':
-    case 'YEAR':
-      return parseInt(value, 10)
-    case 'FLOAT32':
-    case 'FLOAT64':
-      return parseFloat(value)
-    case 'DECIMAL':
-    case 'INT64':
-    case 'UINT64':
-    case 'DATE':
-    case 'TIME':
-    case 'DATETIME':
-    case 'TIMESTAMP':
-      return value
-    case 'BIT':
-    case 'GEOMETRY':
-      return uint8Array(value)
-    case 'JSON':
-      return value ? JSON.parse(decodeUTF8(value)) : value
-    default:
-      return isBinary(field) ? uint8Array(value) : decodeUTF8(value)
-  }
-}
-
-const binaryCharsetID = 63
-
-function isBinary(field: Field): boolean {
-  return field.charset == binaryCharsetID
 }
