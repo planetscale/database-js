@@ -1,6 +1,6 @@
 import { format } from './sanitization.js'
 export { format } from './sanitization.js'
-import { decode, uint8Array } from './text.js'
+import { decodeUTF8, uint8Array } from './text.js'
 export { hex } from './text.js'
 import { Version } from './version.js'
 
@@ -405,34 +405,18 @@ export function cast(field: Field, value: string | null): any {
     case 'DATETIME':
     case 'TIMESTAMP':
       return value
-    case 'BLOB':
     case 'BIT':
     case 'GEOMETRY':
       return uint8Array(value)
-    case 'BINARY':
-    case 'VARBINARY':
-      return isText(field) ? value : uint8Array(value)
     case 'JSON':
-      return value ? JSON.parse(decode(value)) : value
+      return value ? JSON.parse(decodeUTF8(value)) : value
     default:
-      return decode(value)
+      return isBinary(field) ? uint8Array(value) : decodeUTF8(value)
   }
 }
 
-/**
- * https://github.com/planetscale/vitess-types/blob/main/src/vitess/query/v17/query.proto#L98-L106
- */
+const binaryCharsetID = 63
 
-enum Flags {
-  NONE = 0,
-  ISINTEGRAL = 256,
-  ISUNSIGNED = 512,
-  ISFLOAT = 1024,
-  ISQUOTED = 2048,
-  ISTEXT = 4096,
-  ISBINARY = 8192
-}
-
-function isText(field: Field): boolean {
-  return ((field.flags ?? 0) & Flags.ISTEXT) === Flags.ISTEXT
+function isBinary(field: Field): boolean {
+  return field.charset == binaryCharsetID
 }
