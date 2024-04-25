@@ -73,7 +73,7 @@ interface QueryResultRow {
 
 export interface Field {
   name: string
-  type: string
+  type?: string
   table?: string
 
   // Only populated for included fields

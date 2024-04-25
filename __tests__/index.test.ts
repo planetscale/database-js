@@ -639,4 +639,8 @@ describe('cast', () => {
   test('casts JSON string to JSON object', () => {
     expect(cast({ name: 'test', type: 'JSON' }, '{ "foo": "bar" }')).toStrictEqual({ foo: 'bar' })
   })
+
+  test('casts NULL type', () => {
+    expect(cast({ name: 'test' }, '')).toStrictEqual(null)
+  })
 })
