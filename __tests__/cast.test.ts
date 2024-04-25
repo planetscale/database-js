@@ -116,7 +116,8 @@ describe('cast', () => {
       cast(
         {
           name: 'email',
-          type: 'VARCHAR'
+          type: 'VARCHAR',
+          charset: 255
         },
         'user@planetscale.com'
       )
