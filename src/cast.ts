@@ -23,7 +23,7 @@ export function cast(field: Field, value: any): any {
   }
 
   if (isJson(field)) {
-    return JSON.parse(value)
+    return JSON.parse(decodeUtf8(value))
   }
 
   if (isIntegral(field)) {
