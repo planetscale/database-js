@@ -79,7 +79,7 @@ INSERT INTO `test` VALUES (
     'aa',
     'foo',
     'foo,bar',
-    '{"ad":null}',
+    '{"ad":null,"foo":"ü"}',
     ST_GeomFromText('LINESTRING(0 0, 1 1, 2 0)'),
     POINT(1, 1),
     ST_GeomFromText('LINESTRING(0 0, 1 1, 2 0)'),
