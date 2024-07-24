@@ -15,7 +15,7 @@ export function uint8Array(text: string): Uint8Array {
 
 export function uint8ArrayToHex(uint8: Uint8Array): string {
   const digits = Array.from(uint8).map((i) => i.toString(16).padStart(2, '0'))
-  return `0x${digits.join('')}`
+  return `x'${digits.join('')}'`
 }
 
 function bytes(text: string): number[] {

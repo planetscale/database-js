@@ -80,6 +80,12 @@ describe('sanitization', () => {
       expect(format(query, [state])).toEqual(expected)
     })
 
+    test('formats empty Uint8Array', () => {
+      const query = 'select 1 from user where state = ?'
+      const expected = "select 1 from user where state = x''"
+      expect(format(query, [new Uint8Array([])])).toEqual(expected)
+    })
+
     test('escapes double quotes', () => {
       const query = 'select 1 from user where state = ?'
       const expected = 'select 1 from user where state = \'\\"a\\"\''

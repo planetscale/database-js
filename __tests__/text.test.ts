@@ -42,7 +42,8 @@ describe('text', () => {
 
   describe('uint8ArrayToHex', () => {
     test('converts an array of 8-bit unsigned integers to hex', () => {
-      expect(uint8ArrayToHex(new Uint8Array([197]))).toEqual('0xc5')
+      expect(uint8ArrayToHex(new Uint8Array([]))).toEqual("x''")
+      expect(uint8ArrayToHex(new Uint8Array([197]))).toEqual("x'c5'")
     })
   })
 })
