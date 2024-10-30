@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, hex, DatabaseError, type Cast } from '../dist/index'
+import { connect, format, hex, DatabaseError, type Cast, Client, isClient } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
@@ -614,5 +614,12 @@ describe('format', () => {
 describe('hex', () => {
   test('exports hex function', () => {
     expect(hex('\0')).toEqual('0x00')
+  })
+})
+
+describe('guards', () => {
+  test('isClient', () => {
+    const client = new Client(config)
+    expect(isClient(client)).toBe(true)
   })
 })
