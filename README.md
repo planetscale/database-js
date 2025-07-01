@@ -1,8 +1,8 @@
 ![PlanetScale serverless driver for JavaScript](https://github.com/planetscale/database-js/assets/440926/0dfab33f-b01f-4814-ae40-c5fe5cbe94e3)
 
-# PlanetScale serverless driver for JavaScript
+# PlanetScale serverless JavaScript driver for Vitess/MySQL
 
-A Fetch API-compatible PlanetScale database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions
+A Fetch API-compatible PlanetScale Vitess/MySQL database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions
 
 ## Installation
 
