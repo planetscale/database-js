@@ -1,6 +1,4 @@
-import { cast } from './cast.js'
 export { cast } from './cast.js'
-import { format } from './sanitization.js'
 export { format } from './sanitization.js'
 export { hex } from './text.js'
 import { Version } from './version.js'
