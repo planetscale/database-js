@@ -12,4 +12,7 @@ describe('createBulkInsert', () => {
   it('throws if no rows', () => {
     expect(() => createBulkInsert('INSERT INTO x VALUES', [])).toThrow('No rows provided')
   })
-})
+}) 
+
+
+

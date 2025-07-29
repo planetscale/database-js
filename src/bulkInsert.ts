@@ -10,4 +10,6 @@ export function createBulkInsert(baseSql: string, rows: any[][]) {
   const sql = `${baseSql} ${placeholders}`
   const params = rows.flat()
   return { sql, params }
-}
+} 
+
+
