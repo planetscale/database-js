@@ -5,7 +5,7 @@
 A Fetch API-compatible PlanetScale Vitess/MySQL database driver for serverless and edge compute platforms that require HTTP external connections, such as Cloudflare Workers or Vercel Edge Functions
 
 > [!TIP]
-> Connecting to a PlanetScale Postgres database? Visit the [PlanetScale Postgres documentation](https://planetscale.com/docs/postgres/connecting).
+> Connecting to a PlanetScale Postgres database? We support the Neon serverless driver, [read the documentation](https://planetscale.com/docs/postgres/connecting/neon-serverless-driver) to connect.
 
 ## Installation
 
