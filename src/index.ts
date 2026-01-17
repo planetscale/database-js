@@ -115,10 +115,17 @@ type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
   ? { as: 'array'; cast?: Cast }
   : never
 
+export const TypeId: unique symbol = Symbol.for('@planetscale/database/Client')
+export type TypeId = typeof TypeId
+
+export const isClient = (u: unknown): u is Client => typeof u === 'object' && u !== null && TypeId in u
+
 export class Client {
-  public readonly config: Config
+  public readonly config: Config;
+  readonly [TypeId]: TypeId
 
   constructor(config: Config) {
+    this[TypeId] = TypeId
     this.config = config
   }
 
