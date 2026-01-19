@@ -210,6 +210,28 @@ const arrays = conn.execute(query, [1], { as: 'array' })
 // arrays.rows => [['1', '2']]
 ```
 
+### Bulk Insert Helper
+
+You can use the `createBulkInsert` helper to easily construct SQL and parameters for bulk inserts:
+
+```ts
+import { connect } from '@planetscale/database'
+import { createBulkInsert } from './src/bulkInsert'
+
+const conn = connect({
+  host: '<host>',
+  username: '<user>',
+  password: '<password>'
+})
+
+const { sql, params } = createBulkInsert(
+  'INSERT INTO x VALUES',
+  [[1, 2, 3], [4, 5, 6]]
+)
+const result = await conn.execute(sql, params)
+console.log(result)
+```
+
 ## Development
 
 ```sh
