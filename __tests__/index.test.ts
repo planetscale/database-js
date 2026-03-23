@@ -1,5 +1,5 @@
 import SqlString from 'sqlstring'
-import { connect, format, hex, DatabaseError, type Cast } from '../dist/index'
+import { connect, format, hex, DatabaseError, UnknownError, type Cast } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
@@ -125,7 +125,7 @@ describe('transaction', () => {
     })
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(401, () => {
       numRequests++
-      return mockError
+      return { error: mockError }
     })
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, () => {
       numRequests++
@@ -139,7 +139,7 @@ describe('transaction', () => {
       })
     } catch (err) {
       expect(numRequests).toEqual(4)
-      expect(err).toEqual(new DatabaseError('Unauthorized', 401, mockError))
+      expect(err).toEqual(new DatabaseError(mockError.message, 401, mockError))
     }
   })
 })
@@ -382,19 +382,39 @@ describe('execute', () => {
     }
   })
 
-  test('it properly returns network errors when not json', async () => {
-    const mockError = {
-      code: 'internal',
-      message: 'Internal Server Error'
-    }
-
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(500, mockError)
+  test('it returns UnknownError for non-JSON error responses', async () => {
+    mockPool
+      .intercept({ path: EXECUTE_PATH, method: 'POST' })
+      .reply(500, '<html>Bad Gateway</html>', { headers: { 'content-type': 'text/html' } })
 
     const connection = connect(config)
     try {
       await connection.execute('SELECT * from foo;')
+      throw new Error('Expected UnknownError')
     } catch (err) {
-      expect(err).toEqual(new DatabaseError(mockError.message, 500, mockError))
+      expect(err).toBeInstanceOf(UnknownError)
+      expect(err).toBeInstanceOf(DatabaseError)
+      const upstream = err as InstanceType<typeof UnknownError>
+      expect(upstream.status).toEqual(500)
+      expect(upstream.context.body).toEqual('<html>Bad Gateway</html>')
+      expect(upstream.context.status).toEqual(500)
+      expect(upstream.message).toMatch(/Expected a JSON response/)
+    }
+  })
+
+  test('it returns UnknownError for JSON without error field', async () => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(500, { code: 'internal', message: 'oops' })
+
+    const connection = connect(config)
+    try {
+      await connection.execute('SELECT * from foo;')
+      throw new Error('Expected UnknownError')
+    } catch (err) {
+      expect(err).toBeInstanceOf(UnknownError)
+      expect(err).toBeInstanceOf(DatabaseError)
+      const upstream = err as InstanceType<typeof UnknownError>
+      expect(upstream.status).toEqual(500)
+      expect(upstream.context.body).toContain('internal')
     }
   })
 
