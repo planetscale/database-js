@@ -23,6 +23,22 @@ export class DatabaseError extends Error {
   }
 }
 
+interface ResponseContext {
+  status: number
+  statusText: string
+  body: string
+  headers: Record<string, string>
+}
+
+export class UnknownError extends DatabaseError {
+  context: ResponseContext
+  constructor(message: string, context: ResponseContext) {
+    super(message, context.status, { code: 'UNKNOWN', message })
+    this.name = 'UnknownError'
+    this.context = context
+  }
+}
+
 type Types = Record<string, string>
 
 export interface ExecutedQuery<T = Row<'array'> | Row<'object'>> {
@@ -50,8 +66,8 @@ type Res = {
   ok: boolean
   status: number
   statusText: string
-  json(): Promise<any>
   text(): Promise<string>
+  headers?: { forEach(fn: (value: string, key: string) => void): void }
 }
 
 export type Cast = typeof cast
@@ -318,21 +334,43 @@ async function postJSON<T>(config: Config, fetch: Fetch, url: string | URL, body
     cache: 'no-store'
   })
 
+  const text = await response.text()
+
   if (response.ok) {
-    return await response.json()
-  } else {
-    let error = null
-    try {
-      const e = (await response.json()).error
-      error = new DatabaseError(e.message, response.status, e)
-    } catch {
-      error = new DatabaseError(response.statusText, response.status, {
-        code: 'internal',
-        message: response.statusText
-      })
-    }
-    throw error
+    return JSON.parse(text)
   }
+
+  let parsed: { error?: VitessError } | undefined
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    // ignore
+  }
+
+  if (parsed?.error) {
+    throw new DatabaseError(parsed.error.message, response.status, parsed.error)
+  }
+
+  const headers: Record<string, string> = {}
+  try {
+    response.headers?.forEach((value, key) => {
+      headers[key] = value
+    })
+  } catch {
+    // ignore
+  }
+
+  const context: ResponseContext = {
+    status: response.status,
+    statusText: response.statusText,
+    body: text.substring(0, 4096),
+    headers
+  }
+
+  throw new UnknownError(
+    `Expected a JSON response from the database API but received: HTTP ${response.status} ${response.statusText}`,
+    context
+  )
 }
 
 export function connect(config: Config): Connection {
