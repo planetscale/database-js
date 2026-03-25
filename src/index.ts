@@ -5,6 +5,11 @@ export { format } from './sanitization.js'
 export { hex } from './text.js'
 import { Version } from './version.js'
 
+// Cloudflare Workers sets navigator.userAgent to 'Cloudflare-Workers' when the
+// global_navigator compatibility flag is enabled (default since 2022-03-21).
+// https://developers.cloudflare.com/workers/configuration/compatibility-flags/#global-navigator
+const isCloudflareWorker = typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers'
+
 type Row<T extends ExecuteAs = 'object'> = T extends 'array' ? any[] : T extends 'object' ? Record<string, any> : never
 
 interface VitessError {
@@ -367,10 +372,21 @@ async function postJSON<T>(config: Config, fetch: Fetch, url: string | URL, body
     headers
   }
 
-  throw new UnknownError(
-    `Expected a JSON response from the database API but received: HTTP ${response.status} ${response.statusText}`,
-    context
-  )
+  // Cloudflare uses HTTP 520-530 for its own errors. These are never from the database API.
+  // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
+  const isCloudflareStatusCode = response.status >= 520 && response.status <= 530
+
+  // Inside a Worker, any non-JSON response is from Cloudflare's infrastructure,
+  // since the database API exclusively returns JSON responses.
+  const isCloudflareError = isCloudflareStatusCode || isCloudflareWorker
+
+  const status = response.statusText ? `${response.status} ${response.statusText}` : `${response.status}`
+
+  const message = isCloudflareError
+    ? `Cloudflare error: HTTP ${status} (not a database error)`
+    : `Expected JSON response from database API, got HTTP ${status}`
+
+  throw new UnknownError(message, context)
 }
 
 export function connect(config: Config): Connection {

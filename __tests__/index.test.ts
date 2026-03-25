@@ -398,7 +398,7 @@ describe('execute', () => {
       expect(upstream.status).toEqual(500)
       expect(upstream.context.body).toEqual('<html>Bad Gateway</html>')
       expect(upstream.context.status).toEqual(500)
-      expect(upstream.message).toMatch(/Expected a JSON response/)
+      expect(upstream.message).toMatch(/Expected JSON response/)
     }
   })
 
