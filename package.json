@@ -27,14 +27,10 @@
   },
   "scripts": {
     "clean": "rm -rf dist/",
-    "prebuild": "npm run clean",
-    "build": "tsc && tsc --module commonjs --outDir dist/cjs",
-    "postbuild": "echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
+    "build": "npm run clean && tsc && tsc --module commonjs --outDir dist/cjs && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "lint": "eslint src/ __tests__/",
-    "pretest": "npm run build",
-    "test": "jest",
-    "version": "echo \"export const Version = '$npm_package_version'\" > src/version.ts && git add src/version.ts && npm run build",
-    "prepublishOnly": "npm run build"
+    "test": "npm run build && jest",
+    "version": "echo \"export const Version = '$npm_package_version'\" > src/version.ts && git add src/version.ts && npm run build"
   },
   "repository": {
     "type": "git",
