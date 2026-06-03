@@ -1,49 +1,51 @@
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
 import { decodeUtf8, hex, uint8Array, uint8ArrayToHex } from '../src/text'
 
 describe('text', () => {
   describe('decodeUtf8', () => {
     test('decodes ascii bytes', () => {
-      expect(decodeUtf8('a')).toEqual('a')
+      assert.deepStrictEqual(decodeUtf8('a'), 'a')
     })
 
     test('decodes empty string', () => {
-      expect(decodeUtf8('')).toEqual('')
+      assert.deepStrictEqual(decodeUtf8(''), '')
     })
 
     test('decodes null value', () => {
-      expect(decodeUtf8(null)).toEqual('')
+      assert.deepStrictEqual(decodeUtf8(null), '')
     })
 
     test('decodes undefined value', () => {
-      expect(decodeUtf8(undefined)).toEqual('')
+      assert.deepStrictEqual(decodeUtf8(undefined), '')
     })
 
     test('decodes multi-byte characters', () => {
-      expect(decodeUtf8('\xF0\x9F\xA4\x94')).toEqual('🤔')
+      assert.deepStrictEqual(decodeUtf8('\xF0\x9F\xA4\x94'), '🤔')
     })
   })
 
   describe('hex', () => {
     test('encodes binary as hex', () => {
-      expect(hex('\0\0')).toEqual('0x0000')
+      assert.deepStrictEqual(hex('\0\0'), '0x0000')
     })
 
     test('encodes ascii as hex', () => {
-      expect(hex('aa')).toEqual('0x6161')
+      assert.deepStrictEqual(hex('aa'), '0x6161')
     })
   })
 
   describe('uint8Array', () => {
     test('converts to an array of 8-bit unsigned integers', () => {
-      expect(uint8Array('')).toEqual(new Uint8Array([]))
-      expect(uint8Array('Å')).toEqual(new Uint8Array([197]))
+      assert.deepStrictEqual(uint8Array(''), new Uint8Array([]))
+      assert.deepStrictEqual(uint8Array('Å'), new Uint8Array([197]))
     })
   })
 
   describe('uint8ArrayToHex', () => {
     test('converts an array of 8-bit unsigned integers to hex', () => {
-      expect(uint8ArrayToHex(new Uint8Array([]))).toEqual("x''")
-      expect(uint8ArrayToHex(new Uint8Array([197]))).toEqual("x'c5'")
+      assert.deepStrictEqual(uint8ArrayToHex(new Uint8Array([])), "x''")
+      assert.deepStrictEqual(uint8ArrayToHex(new Uint8Array([197])), "x'c5'")
     })
   })
 })

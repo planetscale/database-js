@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
 import SqlString from 'sqlstring'
 import { connect, format, hex, DatabaseError, UnknownError, type Cast } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
@@ -23,6 +25,13 @@ const config = {
 const mockPool = mockAgent.get((value) => mockHosts.includes(value))
 const mockSession = 42
 
+function assertDatabaseError(err: unknown, message: string, status: number, body: { code?: string; message: string }) {
+  assert.ok(err instanceof DatabaseError)
+  assert.strictEqual(err.message, message)
+  assert.strictEqual(err.status, status)
+  assert.deepStrictEqual(err.body, body)
+}
+
 describe('config', () => {
   test('parses database url', async () => {
     const mockResponse = {
@@ -31,14 +40,14 @@ describe('config', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
-      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
+      assert.deepStrictEqual(opts.headers['Authorization'], `Basic ${btoa('someuser:password')}`)
+      assert.deepStrictEqual(opts.headers['User-Agent'], `database-js/${packageJSON.version}`)
       return mockResponse
     })
 
     const connection = connect({ fetch, url: 'mysql://someuser:password@example.com' })
     const got = await connection.execute('SELECT 1 from dual;')
-    expect(got).toBeDefined()
+    assert.notStrictEqual(got, undefined)
   })
 
   test('parses database URL when using HTTP', async () => {
@@ -48,20 +57,20 @@ describe('config', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toEqual(`Basic ${btoa('someuser:password')}`)
-      expect(opts.headers['User-Agent']).toEqual(`database-js/${packageJSON.version}`)
+      assert.deepStrictEqual(opts.headers['Authorization'], `Basic ${btoa('someuser:password')}`)
+      assert.deepStrictEqual(opts.headers['User-Agent'], `database-js/${packageJSON.version}`)
       return mockResponse
     })
 
     const connection = connect({ fetch, url: 'http://someuser:password@localhost:8080' })
     const got = await connection.execute('SELECT 1 from dual;')
-    expect(got).toBeDefined()
+    assert.notStrictEqual(got, undefined)
   })
 
   test('exposes config as a public field', async () => {
     const config = { url: 'mysql://someuser:password@example.com/db' }
     const connection = connect(config)
-    expect(connection.config).toEqual({
+    assert.deepStrictEqual(connection.config, {
       host: 'example.com',
       username: 'someuser',
       password: 'password',
@@ -100,7 +109,7 @@ describe('transaction', () => {
       return tx.execute('SELECT 1 from dual;')
     })
 
-    expect(numRequests).toEqual(3)
+    assert.deepStrictEqual(numRequests, 3)
   })
 
   test('it rolls back when an error occurs', async () => {
@@ -137,9 +146,10 @@ describe('transaction', () => {
       await connection.transaction((tx) => {
         return Promise.all([tx.execute('SELECT 1'), tx.execute('SELECT 1')])
       })
+      assert.fail('expected transaction to throw')
     } catch (err) {
-      expect(numRequests).toEqual(4)
-      expect(err).toEqual(new DatabaseError(mockError.message, 401, mockError))
+      assert.deepStrictEqual(numRequests, 4)
+      assertDatabaseError(err, mockError.message, 401, mockError)
     }
   })
 })
@@ -171,27 +181,27 @@ describe('execute', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(null)
+      assert.deepStrictEqual(bodyObj.session, null)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1, null from dual;')
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(mockSession)
+      assert.deepStrictEqual(bodyObj.session, mockSession)
       return mockResponse
     })
 
     const got2 = await connection.execute('SELECT 1, null from dual;')
 
-    expect(got2).toEqual(want)
+    assert.deepStrictEqual(got2, want)
   })
 
   test('it properly returns and decodes a select query (select null)', async () => {
@@ -217,27 +227,27 @@ describe('execute', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(null)
+      assert.deepStrictEqual(bodyObj.session, null)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT null')
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(mockSession)
+      assert.deepStrictEqual(bodyObj.session, mockSession)
       return mockResponse
     })
 
     const got2 = await connection.execute('SELECT null')
 
-    expect(got2).toEqual(want)
+    assert.deepStrictEqual(got2, want)
   })
 
   test('it properly returns and decodes a select query with rows as array when designated', async () => {
@@ -263,16 +273,16 @@ describe('execute', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(null)
+      assert.deepStrictEqual(bodyObj.session, null)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT 1 from dual;', null, { as: 'array' })
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('it properly returns an executed query for a DDL statement', async () => {
@@ -300,7 +310,7 @@ describe('execute', () => {
     const connection = connect(config)
     const got = await connection.execute(query)
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('it properly returns an executed query for an UPDATE statement', async () => {
@@ -330,7 +340,7 @@ describe('execute', () => {
     const connection = connect(config)
     const got = await connection.execute(query)
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('it properly returns an executed query for an INSERT statement', async () => {
@@ -361,7 +371,7 @@ describe('execute', () => {
     const connection = connect(config)
     const got = await connection.execute(query)
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('it properly returns network errors when unauthenticated', async () => {
@@ -377,8 +387,9 @@ describe('execute', () => {
     const connection = connect(config)
     try {
       await connection.execute('SELECT * from foo;')
+      assert.fail('expected execute to throw')
     } catch (err) {
-      expect(err).toEqual(new DatabaseError(mockError.message, 401, mockError))
+      assertDatabaseError(err, mockError.message, 401, mockError)
     }
   })
 
@@ -390,15 +401,15 @@ describe('execute', () => {
     const connection = connect(config)
     try {
       await connection.execute('SELECT * from foo;')
-      throw new Error('Expected UnknownError')
+      assert.fail('Expected UnknownError')
     } catch (err) {
-      expect(err).toBeInstanceOf(UnknownError)
-      expect(err).toBeInstanceOf(DatabaseError)
+      assert.ok(err instanceof UnknownError)
+      assert.ok(err instanceof DatabaseError)
       const upstream = err as InstanceType<typeof UnknownError>
-      expect(upstream.status).toEqual(500)
-      expect(upstream.context.body).toEqual('<html>Bad Gateway</html>')
-      expect(upstream.context.status).toEqual(500)
-      expect(upstream.message).toMatch(/Expected JSON response/)
+      assert.deepStrictEqual(upstream.status, 500)
+      assert.deepStrictEqual(upstream.context.body, '<html>Bad Gateway</html>')
+      assert.deepStrictEqual(upstream.context.status, 500)
+      assert.match(upstream.message, /Expected JSON response/)
     }
   })
 
@@ -408,13 +419,13 @@ describe('execute', () => {
     const connection = connect(config)
     try {
       await connection.execute('SELECT * from foo;')
-      throw new Error('Expected UnknownError')
+      assert.fail('Expected UnknownError')
     } catch (err) {
-      expect(err).toBeInstanceOf(UnknownError)
-      expect(err).toBeInstanceOf(DatabaseError)
+      assert.ok(err instanceof UnknownError)
+      assert.ok(err instanceof DatabaseError)
       const upstream = err as InstanceType<typeof UnknownError>
-      expect(upstream.status).toEqual(500)
-      expect(upstream.context.body).toContain('internal')
+      assert.deepStrictEqual(upstream.status, 500)
+      assert.ok(upstream.context.body.includes('internal'))
     }
   })
 
@@ -435,8 +446,9 @@ describe('execute', () => {
     const connection = connect(config)
     try {
       await connection.execute('SELECT * from foo;')
+      assert.fail('expected execute to throw')
     } catch (err) {
-      expect(err).toEqual(new DatabaseError(mockError.message, 400, mockError))
+      assertDatabaseError(err, mockError.message, 400, mockError)
     }
   })
 
@@ -464,14 +476,14 @@ describe('execute', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.query).toEqual(want.statement)
+      assert.deepStrictEqual(bodyObj.query, want.statement)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('SELECT ? from dual where foo = ?;', [1, 'bar'])
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('it uses custom format function', async () => {
@@ -498,14 +510,14 @@ describe('execute', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.query).toEqual(want.statement)
+      assert.deepStrictEqual(bodyObj.query, want.statement)
       return mockResponse
     })
 
     const connection = connect({ ...config, format: SqlString.format })
     const got = await connection.execute('select ?? from ?? where id = ?', [['login', 'email'], 'users', 42])
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('uses custom cast function', async () => {
@@ -532,7 +544,7 @@ describe('execute', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.query).toEqual(want.statement)
+      assert.deepStrictEqual(bodyObj.query, want.statement)
       return mockResponse
     })
 
@@ -540,7 +552,7 @@ describe('execute', () => {
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual')
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('uses custom cast function when it is passed to execute', async () => {
@@ -567,7 +579,7 @@ describe('execute', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.query).toEqual(want.statement)
+      assert.deepStrictEqual(bodyObj.query, want.statement)
       return mockResponse
     })
     const connInflate: Cast = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
@@ -575,7 +587,7 @@ describe('execute', () => {
     const connection = connect({ ...config, cast: inflate })
     const got = await connection.execute('select 1 from dual', {}, { cast: connInflate })
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 
   test('parses json column values', async () => {
@@ -604,14 +616,14 @@ describe('execute', () => {
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.query).toEqual(want.statement)
+      assert.deepStrictEqual(bodyObj.query, want.statement)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('select document from documents')
 
-    expect(got).toEqual(want)
+    assert.deepStrictEqual(got, want)
   })
 })
 
@@ -627,12 +639,12 @@ describe('format', () => {
   test('exports format function', () => {
     const query = 'select 1 from user where id=?'
     const expected = 'select 1 from user where id=42'
-    expect(format(query, [42])).toEqual(expected)
+    assert.deepStrictEqual(format(query, [42]), expected)
   })
 })
 
 describe('hex', () => {
   test('exports hex function', () => {
-    expect(hex('\0')).toEqual('0x00')
+    assert.deepStrictEqual(hex('\0'), '0x00')
   })
 })

@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
 import { connect } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 
@@ -85,16 +87,16 @@ describe('golden', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(null)
+      assert.deepStrictEqual(bodyObj.session, null)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('xxx')
 
-    expect(got.rows[0]).toEqual(want)
+    assert.deepStrictEqual(got.rows[0], want)
   })
 
   test('runs e2e dual tests', async () => {
@@ -109,16 +111,16 @@ describe('golden', () => {
     }
 
     mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      expect(opts.headers['Authorization']).toMatch(/Basic /)
+      assert.match(opts.headers['Authorization'], /Basic /)
       const bodyObj = JSON.parse(opts.body.toString())
-      expect(bodyObj.session).toEqual(null)
+      assert.deepStrictEqual(bodyObj.session, null)
       return mockResponse
     })
 
     const connection = connect(config)
     const got = await connection.execute('xxx')
 
-    expect(got.rows[0]).toEqual(want)
+    assert.deepStrictEqual(got.rows[0], want)
   })
 })
 

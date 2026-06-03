@@ -1,106 +1,117 @@
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
 import { cast } from '../src/cast'
 
 describe('cast', () => {
   test('casts NULL values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'email',
           type: 'VARCHAR'
         },
         null
-      )
-    ).toEqual(null)
+      ),
+      null
+    )
   })
 
   test('casts INT64, UINT64 values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'id',
           type: 'UINT64'
         },
         '1'
-      )
-    ).toEqual('1')
+      ),
+      '1'
+    )
   })
 
   test('casts DATETIME, DATE, TIMESTAMP, TIME values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'created_at',
           type: 'DATETIME'
         },
         '2024-01-01 00:00:00'
-      )
-    ).toEqual('2024-01-01 00:00:00')
+      ),
+      '2024-01-01 00:00:00'
+    )
   })
 
   test('casts DECIMAL values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'decimal',
           type: 'DECIMAL'
         },
         '5.4'
-      )
-    ).toEqual('5.4')
+      ),
+      '5.4'
+    )
   })
 
   test('casts JSON values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'metadata',
           type: 'JSON'
         },
         '{ "color": "blue" }'
-      )
-    ).toStrictEqual({ color: 'blue' })
+      ),
+      { color: 'blue' }
+    )
   })
 
   test('casts INT8, UINT8, INT16, UINT16, INT24, UINT24, INT32, UINT32, INT64, UINT64, YEAR values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'verified',
           type: 'INT8'
         },
         '1'
-      )
-    ).toEqual(1)
-    expect(
+      ),
+      1
+    )
+    assert.deepStrictEqual(
       cast(
         {
           name: 'age',
           type: 'INT32'
         },
         '21'
-      )
-    ).toEqual(21)
+      ),
+      21
+    )
   })
 
   test('casts FLOAT32, FLOAT64 values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'float',
           type: 'FLOAT32'
         },
         '20.4'
-      )
-    ).toEqual(20.4)
-    expect(
+      ),
+      20.4
+    )
+    assert.deepStrictEqual(
       cast(
         {
           name: 'double',
           type: 'FLOAT64'
         },
         '101.4'
-      )
-    ).toEqual(101.4)
+      ),
+      101.4
+    )
   })
 
   test('casts BLOB, BIT, GEOMETRY, BINARY, VARBINARY values', () => {
@@ -112,7 +123,7 @@ describe('cast', () => {
   })
 
   test('casts VARCHAR values', () => {
-    expect(
+    assert.deepStrictEqual(
       cast(
         {
           name: 'email',
@@ -120,7 +131,8 @@ describe('cast', () => {
           charset: 255
         },
         'user@planetscale.com'
-      )
-    ).toEqual('user@planetscale.com')
+      ),
+      'user@planetscale.com'
+    )
   })
 })
