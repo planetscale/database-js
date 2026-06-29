@@ -204,8 +204,9 @@ function protocol(protocol: string): string {
 
 function buildURL(url: URL): string {
   const scheme = `${protocol(url.protocol)}//`
+  const host = url.port === '3306' ? url.hostname : url.host
 
-  return new URL(url.pathname, `${scheme}${url.host}`).toString()
+  return new URL(url.pathname, `${scheme}${host}`).toString()
 }
 
 export class Connection {
@@ -226,6 +227,10 @@ export class Connection {
       this.config.host = url.hostname
       this.url = buildURL(url)
     } else {
+      const url = new URL(`https://${this.config.host}`)
+      if (url.port === '3306') {
+        this.config.host = url.hostname
+      }
       this.url = new URL(`https://${this.config.host}`).toString()
     }
   }

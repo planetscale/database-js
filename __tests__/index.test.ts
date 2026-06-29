@@ -67,6 +67,16 @@ describe('config', () => {
     assert.notStrictEqual(got, undefined)
   })
 
+  test('strips port 3306 from database URL', async () => {
+    const connection = connect({ fetch, url: 'mysql://someuser:password@example.com:3306/db' })
+    assert.strictEqual(connection.config.host, 'example.com')
+  })
+
+  test('strips port 3306 from config.host', async () => {
+    const connection = connect({ fetch, host: 'example.com:3306', username: 'someuser', password: 'password' })
+    assert.strictEqual(connection.config.host, 'example.com')
+  })
+
   test('exposes config as a public field', async () => {
     const config = { url: 'mysql://someuser:password@example.com/db' }
     const connection = connect(config)
