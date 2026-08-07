@@ -44,7 +44,62 @@ export class UnknownError extends DatabaseError {
   }
 }
 
-type Types = Record<string, string>
+/**
+ * The set of column types returned by PlanetScale / Vitess.
+ *
+ * These map to the enum values in vitessio/vitess go/sqltypes/type.go.
+ * @see https://github.com/vitessio/vitess/blob/main/go/sqltypes/type.go
+ */
+export type FieldType =
+  // Null
+  | 'NULL'
+  // Integral types
+  | 'INT8'
+  | 'INT16'
+  | 'INT24'
+  | 'INT32'
+  | 'INT64'
+  | 'UINT8'
+  | 'UINT16'
+  | 'UINT24'
+  | 'UINT32'
+  | 'UINT64'
+  // Floating point
+  | 'FLOAT32'
+  | 'FLOAT64'
+  // Decimal / numeric
+  | 'DECIMAL'
+  // Date / time
+  | 'DATE'
+  | 'TIME'
+  | 'DATETIME'
+  | 'TIMESTAMP'
+  | 'YEAR'
+  // String types
+  | 'CHAR'
+  | 'VARCHAR'
+  | 'TEXT'
+  | 'BINARY'
+  | 'VARBINARY'
+  | 'BLOB'
+  // Bit
+  | 'BIT'
+  // Set / Enum
+  | 'ENUM'
+  | 'SET'
+  // Geometry
+  | 'GEOMETRY'
+  // JSON
+  | 'JSON'
+  // Vitess-internal / expression types
+  | 'EXPRESSION'
+  | 'HEXNUM'
+  | 'HEXVAL'
+  | 'BITNUM'
+  // Fallback for any future types added server-side
+  | (string & {})
+
+type Types = Record<string, FieldType>
 
 export interface ExecutedQuery<T = Row<'array'> | Row<'object'>> {
   headers: string[]
@@ -95,7 +150,7 @@ interface QueryResultRow {
 
 export interface Field {
   name: string
-  type: string
+  type: FieldType
   table?: string
 
   // Only populated for included fields
@@ -204,7 +259,6 @@ function protocol(protocol: string): string {
 
 function buildURL(url: URL): string {
   const scheme = `${protocol(url.protocol)}//`
-
   return new URL(url.pathname, `${scheme}${url.host}`).toString()
 }
 
@@ -231,7 +285,7 @@ export class Connection {
   }
 
   async transaction<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    const conn = new Connection(this.config) // Create a new connection specifically for the transaction
+    const conn = new Connection(this.config)
     const tx = new Tx(conn)
 
     try {
@@ -288,11 +342,6 @@ export class Connection {
     const insertId = result?.insertId ?? '0'
 
     const fields = result?.fields ?? []
-    // ensure each field has a type assigned,
-    // the only case it would be omitted is in the case of
-    // NULL due to the protojson spec. NULL in our enum
-    // is 0, and empty fields are omitted from the JSON response,
-    // so we should backfill an expected type.
     for (const field of fields) {
       field.type ||= 'NULL'
     }
@@ -372,14 +421,8 @@ async function postJSON<T>(config: Config, fetch: Fetch, url: string | URL, body
     headers
   }
 
-  // Cloudflare uses HTTP 520-530 for its own errors. These are never from the database API.
-  // https://developers.cloudflare.com/support/troubleshooting/cloudflare-errors/troubleshooting-cloudflare-5xx-errors/
   const isCloudflareStatusCode = response.status >= 520 && response.status <= 530
-
-  // Inside a Worker, any non-JSON response is from Cloudflare's infrastructure,
-  // since the database API exclusively returns JSON responses.
   const isCloudflareError = isCloudflareStatusCode || isCloudflareWorker
-
   const status = response.statusText ? `${response.status} ${response.statusText}` : `${response.status}`
 
   const message = isCloudflareError
@@ -395,7 +438,6 @@ export function connect(config: Config): Connection {
 
 function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
-
   return fields.map((field, ix) => {
     return cast(field, row[ix])
   }) as T
@@ -403,7 +445,6 @@ function parseArrayRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): 
 
 function parseObjectRow<T>(fields: Field[], rawRow: QueryResultRow, cast: Cast): T {
   const row = decodeRow(rawRow)
-
   return fields.reduce(
     (acc, field, ix) => {
       acc[field.name] = cast(field, row[ix])
@@ -426,7 +467,6 @@ function decodeRow(row: QueryResultRow): Array<string | null> {
   let offset = 0
   return row.lengths.map((size) => {
     const width = parseInt(size, 10)
-    // Negative length indicates a null value.
     if (width < 0) return null
     const splice = values.substring(offset, offset + width)
     offset += width
