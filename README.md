@@ -132,13 +132,16 @@ await disconnectAll()
 ### Custom query parameter format function
 
 Query replacement parameters identified with `?` are replaced with escaped values. Named replacement parameters are supported with a colon prefix.
+Placeholders inside string literals, quoted identifiers, and non-executable SQL comments are left unchanged. MySQL `/*! ... */` version comments contain executable SQL and are formatted accordingly. A version comment whose tokenization differs between supported Vitess releases throws an error.
+Use `AS` before a quoted select-list alias (for example, `? AS 'value'`) so a quoted value cannot concatenate with the alias.
 
 ```ts
 const results1 = await conn.execute('select 1 from dual where 1=?', [42])
 const results2 = await conn.execute('select 1 from dual where 1=:id', { id: 42 })
 ```
 
-Providing a custom format function overrides the built-in escaping with an external library, like [`sqlstring`](https://github.com/mysqljs/sqlstring).
+Providing a custom format function overrides the built-in placeholder parsing and escaping with an external library, like [`sqlstring`](https://github.com/mysqljs/sqlstring).
+`sqlstring` replaces `?` characters inside strings and comments as well as value placeholders, so using it bypasses the context-aware behavior above. Only use a custom formatter whose placeholder rules are safe for your query templates.
 
 ```ts
 import { connect } from '@planetscale/database'
