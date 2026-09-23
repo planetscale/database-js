@@ -13,11 +13,6 @@ export function uint8Array(text: string): Uint8Array {
   return Uint8Array.from(bytes(text))
 }
 
-export function uint8ArrayToHex(uint8: Uint8Array): string {
-  const digits = Array.from(uint8).map((i) => i.toString(16).padStart(2, '0'))
-  return `x'${digits.join('')}'`
-}
-
 function bytes(text: string): number[] {
   return text.split('').map((c) => c.charCodeAt(0))
 }

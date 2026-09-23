@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import { decodeUtf8, hex, uint8Array, uint8ArrayToHex } from '../src/text'
+import { decodeUtf8, hex, uint8Array } from '../src/text'
 
 describe('text', () => {
   describe('decodeUtf8', () => {
@@ -39,13 +39,6 @@ describe('text', () => {
     test('converts to an array of 8-bit unsigned integers', () => {
       assert.deepStrictEqual(uint8Array(''), new Uint8Array([]))
       assert.deepStrictEqual(uint8Array('Å'), new Uint8Array([197]))
-    })
-  })
-
-  describe('uint8ArrayToHex', () => {
-    test('converts an array of 8-bit unsigned integers to hex', () => {
-      assert.deepStrictEqual(uint8ArrayToHex(new Uint8Array([])), "x''")
-      assert.deepStrictEqual(uint8ArrayToHex(new Uint8Array([197])), "x'c5'")
     })
   })
 })
