@@ -6,7 +6,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "type": "module",
   "main": "./dist/index.js",
