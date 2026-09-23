@@ -1,7 +1,5 @@
 import { cast } from './cast.js'
 export { cast } from './cast.js'
-import { format } from './sanitization.js'
-export { format } from './sanitization.js'
 export { hex } from './text.js'
 import { Version } from './version.js'
 
@@ -76,7 +74,6 @@ type Res = {
 }
 
 export type Cast = typeof cast
-type Format = typeof format
 
 export interface Config {
   url?: string
@@ -84,7 +81,6 @@ export interface Config {
   password?: string
   host?: string
   fetch?: Fetch
-  format?: Format
   cast?: Cast
 }
 
@@ -128,8 +124,6 @@ interface QueryResult {
 
 type ExecuteAs = 'array' | 'object'
 
-type ExecuteArgs = Record<string, any> | any[] | null
-
 type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
   ? { as?: 'object'; cast?: Cast }
   : T extends 'object'
@@ -147,22 +141,15 @@ export class Client {
     return this.connection().transaction(fn)
   }
 
-  async execute<T = Row<'object'>>(
-    query: string,
-    args?: ExecuteArgs,
-    options?: ExecuteOptions<'object'>
-  ): Promise<ExecutedQuery<T>>
-  async execute<T = Row<'array'>>(
-    query: string,
-    args: ExecuteArgs,
-    options: ExecuteOptions<'array'>
-  ): Promise<ExecutedQuery<T>>
+  async execute<T = Row<'object'>>(query: string, options?: ExecuteOptions<'object'>): Promise<ExecutedQuery<T>>
+  async execute<T = Row<'array'>>(query: string, options: ExecuteOptions<'array'>): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
-    args: ExecuteArgs = null,
-    options: any = { as: 'object' }
+    options?: any,
+    ...unsupported: unknown[]
   ): Promise<ExecutedQuery<T>> {
-    return this.connection().execute<T>(query, args, options)
+    options = executeOptions(options, unsupported)
+    return this.connection().execute<T>(query, options)
   }
 
   connection(): Connection {
@@ -179,23 +166,39 @@ class Tx {
     this.conn = conn
   }
 
-  async execute<T = Row<'object'>>(
-    query: string,
-    args?: ExecuteArgs,
-    options?: ExecuteOptions<'object'>
-  ): Promise<ExecutedQuery<T>>
-  async execute<T = Row<'array'>>(
-    query: string,
-    args: ExecuteArgs,
-    options: ExecuteOptions<'array'>
-  ): Promise<ExecutedQuery<T>>
+  async execute<T = Row<'object'>>(query: string, options?: ExecuteOptions<'object'>): Promise<ExecutedQuery<T>>
+  async execute<T = Row<'array'>>(query: string, options: ExecuteOptions<'array'>): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
-    args: ExecuteArgs = null,
-    options: any = { as: 'object' }
+    options?: any,
+    ...unsupported: unknown[]
   ): Promise<ExecutedQuery<T>> {
-    return this.conn.execute<T>(query, args, options)
+    options = executeOptions(options, unsupported)
+    return this.conn.execute<T>(query, options)
   }
+}
+
+const optionKeys = ['as', 'cast']
+
+// Catch callers still using the removed execute(query, args, options) form,
+// which would otherwise run the query with its placeholders unreplaced.
+function executeOptions(options: unknown, unsupported: unknown[]): { as?: ExecuteAs; cast?: Cast } {
+  if (options == null) {
+    options = {}
+  }
+
+  const isOptions =
+    typeof options === 'object' &&
+    !Array.isArray(options) &&
+    Object.keys(options as object).every((key) => optionKeys.includes(key))
+
+  if (unsupported.length > 0 || !isOptions) {
+    throw new Error(
+      'Query parameters are not supported: pass a complete SQL string and options to execute(query, options)'
+    )
+  }
+
+  return options as { as?: ExecuteAs; cast?: Cast }
 }
 
 function protocol(protocol: string): string {
@@ -250,28 +253,18 @@ export class Connection {
     await this.createSession()
   }
 
-  async execute<T = Row<'object'>>(
-    query: string,
-    args?: ExecuteArgs,
-    options?: ExecuteOptions<'object'>
-  ): Promise<ExecutedQuery<T>>
-  async execute<T = Row<'array'>>(
-    query: string,
-    args: ExecuteArgs,
-    options: ExecuteOptions<'array'>
-  ): Promise<ExecutedQuery<T>>
+  async execute<T = Row<'object'>>(query: string, options?: ExecuteOptions<'object'>): Promise<ExecutedQuery<T>>
+  async execute<T = Row<'array'>>(query: string, options: ExecuteOptions<'array'>): Promise<ExecutedQuery<T>>
   async execute<T = Row<'object'> | Row<'array'>>(
     query: string,
-    args: ExecuteArgs = null,
-    options: any = { as: 'object' }
+    options?: any,
+    ...unsupported: unknown[]
   ): Promise<ExecutedQuery<T>> {
+    options = executeOptions(options, unsupported)
     const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
 
-    const formatter = this.config.format || format
-    const sql = args ? formatter(query, args) : query
-
     const saved = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url, {
-      query: sql,
+      query,
       session: this.session
     })
 
@@ -313,7 +306,7 @@ export class Connection {
       rowsAffected,
       insertId,
       size: rows.length,
-      statement: sql,
+      statement: query,
       time: timingSeconds * 1000
     }
   }

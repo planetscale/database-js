@@ -25,7 +25,7 @@ const config = {
 }
 
 const conn = connect(config)
-const results = await conn.execute('select 1 from dual where 1=?', [1])
+const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
 
@@ -78,8 +78,8 @@ const config = {
 
 const conn = connect(config)
 const results = await conn.transaction(async (tx) => {
-  const whenBranch = await tx.execute('INSERT INTO branches (database_id, name) VALUES (?, ?)', [42, "planetscale"])
-  const whenCounter = await tx.execute('INSERT INTO slotted_counters(record_type, record_id, slot, count) VALUES (?, ?, RAND() * 100, 1) ON DUPLICATE KEY UPDATE count = count + 1', ['branch_count', 42])
+  const whenBranch = await tx.execute(`INSERT INTO branches (database_id, name) VALUES (42, 'planetscale')`)
+  const whenCounter = await tx.execute(`INSERT INTO slotted_counters(record_type, record_id, slot, count) VALUES ('branch_count', 42, RAND() * 100, 1) ON DUPLICATE KEY UPDATE count = count + 1"`
   return [whenBranch, whenCounter]
 })
 console.log(results)
@@ -129,34 +129,16 @@ console.log(results)
 await disconnectAll()
 ```
 
-### Custom query parameter format function
+### Query parameters
 
-Query replacement parameters identified with `?` are replaced with escaped values. Named replacement parameters are supported with a colon prefix.
-Placeholders inside string literals, quoted identifiers, and non-executable SQL comments are left unchanged. MySQL `/*! ... */` version comments contain executable SQL and are formatted accordingly. A version comment whose tokenization differs between supported Vitess releases throws an error.
-Use `AS` before a quoted select-list alias (for example, `? AS 'value'`) so a quoted value cannot concatenate with the alias.
+`execute` does not interpolate query parameters. Pass it a complete SQL string. Calling `execute` with an array or a named-parameter object throws an error.
 
-```ts
-const results1 = await conn.execute('select 1 from dual where 1=?', [42])
-const results2 = await conn.execute('select 1 from dual where 1=:id', { id: 42 })
-```
-
-Providing a custom format function overrides the built-in placeholder parsing and escaping with an external library, like [`sqlstring`](https://github.com/mysqljs/sqlstring).
-`sqlstring` replaces `?` characters inside strings and comments as well as value placeholders, so using it bypasses the context-aware behavior above. Only use a custom formatter whose placeholder rules are safe for your query templates.
+Any values you include in a query must be escaped first, for example with [`sql-escaper`](https://github.com/mysqljs/sql-escaper):
 
 ```ts
-import { connect } from '@planetscale/database'
-import SqlString from 'sqlstring'
+import { format } from 'sql-escaper'
 
-const config = {
-  format: SqlString.format,
-  host: '<host>',
-  username: '<user>',
-  password: '<password>'
-}
-
-const conn = connect(config)
-const results = await conn.execute('select 1 from dual where 1=?', [42])
-console.log(results)
+const results = await conn.execute(format('select 1 from dual where 1=?', [42]))
 ```
 
 ### Custom type casting function
@@ -188,7 +170,6 @@ You can also pass a custom `cast` function to `execute`. If present, this will o
 ```ts
 const result = await conn.execute(
   'SELECT userId, SUM(balance) AS balance FROM UserBalanceItem GROUP BY userId',
-  {},
   {
     cast: (field, value) => {
       if (field.name === 'balance') {
@@ -205,11 +186,11 @@ const result = await conn.execute(
 Rows can be returned as an object or an array of column values by passing an `as` option to `execute`.
 
 ```ts
-const query = 'select 1 as one, 2 as two where 1=?'
-const objects = conn.execute(query, [1], { as: 'object' })
+const query = 'select 1 as one, 2 as two'
+const objects = conn.execute(query, { as: 'object' })
 // objects.rows => [{one: '1', two: '2'}]
 
-const arrays = conn.execute(query, [1], { as: 'array' })
+const arrays = conn.execute(query, { as: 'array' })
 // arrays.rows => [['1', '2']]
 ```
 

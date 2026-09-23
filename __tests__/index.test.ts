@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
-import SqlString from 'sqlstring'
-import { connect, format, hex, DatabaseError, UnknownError, type Cast } from '../dist/index'
+import { Client, connect, hex, DatabaseError, UnknownError, type Cast } from '../dist/index'
 import { fetch, MockAgent, setGlobalDispatcher } from 'undici'
 import packageJSON from '../package.json'
 
@@ -280,7 +279,7 @@ describe('execute', () => {
     })
 
     const connection = connect(config)
-    const got = await connection.execute('SELECT 1 from dual;', null, { as: 'array' })
+    const got = await connection.execute('SELECT 1 from dual;', { as: 'array' })
 
     assert.deepStrictEqual(got, want)
   })
@@ -452,72 +451,29 @@ describe('execute', () => {
     }
   })
 
-  test('it properly escapes query parameters', async () => {
-    const mockResponse = {
-      session: null,
-      result: {
-        fields: [{ name: ':vtg1', type: 'INT32' }],
-        rows: [{ lengths: ['1'], values: 'MQ==' }]
-      },
-      timing: 1
-    }
-
-    const want = {
-      headers: [':vtg1'],
-      rows: [{ ':vtg1': 1 }],
-      types: { ':vtg1': 'INT32' },
-      fields: [{ name: ':vtg1', type: 'INT32' }],
-      size: 1,
-      insertId: '0',
-      rowsAffected: 0,
-      statement: "SELECT 1 from dual where foo = 'bar';",
-      time: 1000
-    }
-
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      const bodyObj = JSON.parse(opts.body.toString())
-      assert.deepStrictEqual(bodyObj.query, want.statement)
-      return mockResponse
-    })
-
+  test('it rejects query parameters', async () => {
     const connection = connect(config)
-    const got = await connection.execute('SELECT ? from dual where foo = ?;', [1, 'bar'])
+    const message = /Query parameters are not supported/
 
-    assert.deepStrictEqual(got, want)
+    await assert.rejects(connection.execute('SELECT ? from dual', [1] as any), message)
+    await assert.rejects(connection.execute('SELECT :id from dual', { id: 1 } as any), message)
+    await assert.rejects((connection.execute as any)('SELECT 1 from dual', null, { as: 'array' }), message)
   })
 
-  test('it uses custom format function', async () => {
-    const mockResponse = {
-      session: null,
-      result: {
-        fields: [{ name: ':vtg1', type: 'INT32' }],
-        rows: [{ lengths: ['1'], values: 'MQ==' }]
-      },
-      timing: 1
-    }
+  test('it rejects query parameters in transactions and clients', async () => {
+    const message = /Query parameters are not supported/
 
-    const want = {
-      headers: [':vtg1'],
-      types: { ':vtg1': 'INT32' },
-      fields: [{ name: ':vtg1', type: 'INT32' }],
-      rows: [{ ':vtg1': 1 }],
-      size: 1,
-      insertId: '0',
-      rowsAffected: 0,
-      statement: 'select `login`, `email` from `users` where id = 42',
-      time: 1000
-    }
+    await assert.rejects(new Client(config).execute('SELECT ? from dual', [1] as any), message)
 
-    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
-      const bodyObj = JSON.parse(opts.body.toString())
-      assert.deepStrictEqual(bodyObj.query, want.statement)
-      return mockResponse
-    })
+    // BEGIN and ROLLBACK
+    const mockResponse = { session: null, result: null, timing: 1 }
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, mockResponse)
 
-    const connection = connect({ ...config, format: SqlString.format })
-    const got = await connection.execute('select ?? from ?? where id = ?', [['login', 'email'], 'users', 42])
-
-    assert.deepStrictEqual(got, want)
+    await assert.rejects(
+      connect(config).transaction((tx) => tx.execute('SELECT ? from dual', [1] as any)),
+      message
+    )
   })
 
   test('uses custom cast function', async () => {
@@ -585,7 +541,7 @@ describe('execute', () => {
     const connInflate: Cast = (field, value) => (field.type === 'INT64' ? 'I am a biggish int' : value)
     const inflate: Cast = (field, value) => (field.type === 'INT64' ? BigInt(value as string) : value)
     const connection = connect({ ...config, cast: inflate })
-    const got = await connection.execute('select 1 from dual', {}, { cast: connInflate })
+    const got = await connection.execute('select 1 from dual', { cast: connInflate })
 
     assert.deepStrictEqual(got, want)
   })
@@ -632,14 +588,6 @@ describe('refresh', () => {
     const connection = connect(config)
     mockPool.intercept({ path: CREATE_SESSION_PATH, method: 'POST' }).reply(200, JSON.stringify(mockSession))
     await connection.refresh()
-  })
-})
-
-describe('format', () => {
-  test('exports format function', () => {
-    const query = 'select 1 from user where id=?'
-    const expected = 'select 1 from user where id=42'
-    assert.deepStrictEqual(format(query, [42]), expected)
   })
 })
 
