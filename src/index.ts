@@ -219,7 +219,7 @@ export class Connection {
 
   constructor(config: Config) {
     this.config = config
-    this.fetch = config.fetch || fetch!
+    this.fetch = config.fetch || fetch
     this.session = null
 
     if (config.url) {

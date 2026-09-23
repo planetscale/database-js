@@ -87,7 +87,7 @@ console.log(results)
 
 ### Custom fetch function
 
-Node.js version 18 includes a built-in global `fetch` function. When using an older version of Node.js, you can provide a custom fetch function implementation. We recommend the [`undici`][1] package on which Node's built-in fetch is based.
+The driver uses the global `fetch` function by default. You can provide a custom fetch function implementation, for example to configure proxies or connection pooling. We recommend the [`undici`][1] package on which Node's built-in fetch is based.
 
 [1]: https://github.com/nodejs/undici
 
@@ -107,7 +107,7 @@ const results = await conn.execute('select 1 from dual')
 console.log(results)
 ```
 
-To leverage HTTP/2, you can use the [`fetch-h2`][2] shim. `fetch-h2` also supports Node.js 12+.
+To leverage HTTP/2, you can use the [`fetch-h2`][2] shim.
 
 [2]: https://www.npmjs.com/package/fetch-h2
 
