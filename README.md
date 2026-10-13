@@ -65,6 +65,8 @@ console.log(results)
 
 Use the `transaction` function to safely perform database transactions. If any unhandled errors are thrown during execution of the transaction, the transaction will be rolled back.
 
+Queries on one connection run one after another, in the order they were started, because each request carries the session the previous response returned. A query started inside the callback but not awaited still finishes before `COMMIT` or `ROLLBACK`. To run queries in parallel, use separate connections.
+
 The following example is based on [the Slotted Counter Pattern](https://planetscale.com/blog/the-slotted-counter-pattern).
 
 ```ts

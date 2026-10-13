@@ -153,6 +153,143 @@ describe('transaction', () => {
   })
 })
 
+// A fetch that answers every Execute with the session number of the request it
+// is answering, records what each request carried, and lets a test hold a
+// response open until it decides to release it.
+function sessionTrackingFetch() {
+  const requests: Array<{ query: string; session: unknown }> = []
+  const holds = new Map<string, () => void>()
+  let nextSession = 0
+  const fetchImpl = async (_url: string, init: any) => {
+    const body = JSON.parse(init.body)
+    requests.push({ query: body.query, session: body.session })
+    const session = ++nextSession
+    await new Promise<void>((resolve) => {
+      if (holds.has(body.query)) {
+        holds.set(body.query, resolve)
+      } else {
+        resolve()
+      }
+    })
+    const payload =
+      body.query === 'FAIL'
+        ? { session, error: { code: 'aborted', message: 'query failed' } }
+        : { session, result: { fields: [], rows: [] } }
+    return new Response(JSON.stringify(payload), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  }
+  return {
+    requests,
+    fetch: fetchImpl as any,
+    hold(query: string) {
+      holds.set(query, () => {})
+    },
+    release(query: string) {
+      const resolve = holds.get(query)
+      holds.delete(query)
+      if (resolve) resolve()
+    }
+  }
+}
+
+describe('connection serialization', () => {
+  test('queries on one connection run one after another, each with the previous session', async () => {
+    const tracker = sessionTrackingFetch()
+    tracker.hold('SELECT 1')
+    const connection = connect({ ...config, fetch: tracker.fetch })
+
+    const first = connection.execute('SELECT 1')
+    const second = connection.execute('SELECT 2')
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    // The second query must not have been sent while the first is still in flight.
+    assert.deepStrictEqual(
+      tracker.requests.map((r) => r.query),
+      ['SELECT 1']
+    )
+
+    tracker.release('SELECT 1')
+    await Promise.all([first, second])
+
+    assert.deepStrictEqual(tracker.requests, [
+      { query: 'SELECT 1', session: null },
+      { query: 'SELECT 2', session: 1 }
+    ])
+  })
+
+  test('a failed query does not block the queries behind it', async () => {
+    const tracker = sessionTrackingFetch()
+    const connection = connect({ ...config, fetch: tracker.fetch })
+
+    const failed = connection.execute('FAIL')
+    const after = connection.execute('SELECT 2')
+
+    await assert.rejects(failed, DatabaseError)
+    await after
+    assert.deepStrictEqual(
+      tracker.requests.map((r) => [r.query, r.session]),
+      [
+        ['FAIL', null],
+        ['SELECT 2', 1]
+      ]
+    )
+  })
+
+  test('rollback waits for a query the callback did not await and runs on its session', async () => {
+    const tracker = sessionTrackingFetch()
+    tracker.hold('UPDATE junk SET i = i + 1')
+    const connection = connect({ ...config, fetch: tracker.fetch })
+
+    let pending: Promise<unknown> | undefined
+    const transaction = connection.transaction(async (tx) => {
+      pending = tx.execute('UPDATE junk SET i = i + 1')
+      // The callback fails while the query is still running.
+      await new Promise((_, reject) => setTimeout(() => reject(new Error('boom')), 5))
+    })
+    const outcome = transaction.then(
+      () => 'resolved',
+      (err: Error) => err.message
+    )
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    // BEGIN and the update were sent; ROLLBACK is still waiting on the update.
+    assert.deepStrictEqual(
+      tracker.requests.map((r) => r.query),
+      ['BEGIN', 'UPDATE junk SET i = i + 1']
+    )
+
+    tracker.release('UPDATE junk SET i = i + 1')
+    assert.strictEqual(await outcome, 'boom')
+    await pending
+
+    assert.deepStrictEqual(tracker.requests, [
+      { query: 'BEGIN', session: null },
+      { query: 'UPDATE junk SET i = i + 1', session: 1 },
+      { query: 'ROLLBACK', session: 2 }
+    ])
+  })
+
+  test('commit runs after every query the callback started', async () => {
+    const tracker = sessionTrackingFetch()
+    const connection = connect({ ...config, fetch: tracker.fetch })
+
+    await connection.transaction(async (tx) => {
+      // Not awaited: the queue still orders them before COMMIT.
+      void tx.execute('INSERT INTO t VALUES (1)')
+      void tx.execute('INSERT INTO t VALUES (2)')
+    })
+
+    assert.deepStrictEqual(
+      tracker.requests.map((r) => [r.query, r.session]),
+      [
+        ['BEGIN', null],
+        ['INSERT INTO t VALUES (1)', 1],
+        ['INSERT INTO t VALUES (2)', 2],
+        ['COMMIT', 3]
+      ]
+    )
+  })
+})
+
 describe('execute', () => {
   test('it properly returns and decodes a select query', async () => {
     const mockResponse = {

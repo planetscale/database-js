@@ -216,11 +216,19 @@ export class Connection {
   private fetch: Fetch
   private session: QuerySession | null
   private url: string
+  // Requests on one connection run strictly one after another. Every request
+  // carries the session the previous response produced, so two in flight at
+  // once would both send a stale session and the server would treat the
+  // second as a new, unrelated session. Inside a transaction that means a
+  // query lands outside the transaction, or COMMIT/ROLLBACK runs on a session
+  // with no transaction while the real one stays open until it times out.
+  private queue: Promise<unknown>
 
   constructor(config: Config) {
     this.config = config
     this.fetch = config.fetch || fetch
     this.session = null
+    this.queue = Promise.resolve()
 
     if (config.url) {
       const url = new URL(config.url)
@@ -261,6 +269,21 @@ export class Connection {
     ...unsupported: unknown[]
   ): Promise<ExecutedQuery<T>> {
     options = executeOptions(options, unsupported)
+    return this.serialize(() => this.executeNow<T>(query, options))
+  }
+
+  // Runs task after every request queued before it has settled, whether it
+  // succeeded or failed, so a failed query never blocks the ROLLBACK behind it.
+  private serialize<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(task, task)
+    this.queue = run.then(
+      () => undefined,
+      () => undefined
+    )
+    return run
+  }
+
+  private async executeNow<T>(query: string, options: { as?: ExecuteAs; cast?: Cast }): Promise<ExecutedQuery<T>> {
     const url = new URL('/psdb.v1alpha1.Database/Execute', this.url)
 
     const saved = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url, {
@@ -311,11 +334,13 @@ export class Connection {
     }
   }
 
-  private async createSession(): Promise<QuerySession> {
-    const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
-    const { session } = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url)
-    this.session = session
-    return session
+  private createSession(): Promise<QuerySession> {
+    return this.serialize(async () => {
+      const url = new URL('/psdb.v1alpha1.Database/CreateSession', this.url)
+      const { session } = await postJSON<QueryExecuteResponse>(this.config, this.fetch, url)
+      this.session = session
+      return session
+    })
   }
 }
 
