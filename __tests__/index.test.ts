@@ -284,6 +284,61 @@ describe('execute', () => {
     assert.deepStrictEqual(got, want)
   })
 
+  test('returns column metadata for wide queries with no rows', async () => {
+    const fields = Array.from({ length: 2048 }, (_, i) => ({ name: `column_${i}`, type: 'VARCHAR' }))
+    const types: Record<string, string> = {}
+    for (const field of fields) {
+      types[field.name] = field.type
+    }
+
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, {
+      result: { fields, rows: [] }
+    })
+
+    const got = await connect(config).execute('SELECT wide columns')
+
+    assert.deepStrictEqual(
+      got.headers,
+      fields.map((field) => field.name)
+    )
+    assert.deepStrictEqual(got.types, types)
+    assert.deepStrictEqual(got.fields, fields)
+    assert.deepStrictEqual(got.rows, [])
+  })
+
+  test('preserves duplicate and special column names in type metadata', async () => {
+    mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, {
+      result: {
+        fields: [
+          { name: '__proto__', type: 'VARCHAR' },
+          { name: 'constructor', type: 'INT32' },
+          { name: 'toString', type: 'VARCHAR' },
+          { name: 'duplicate', type: 'INT32' },
+          { name: 'duplicate', type: 'VARCHAR' },
+          { name: '__proto__' }
+        ],
+        rows: []
+      }
+    })
+
+    const got = await connect(config).execute('SELECT duplicate and special columns')
+
+    assert.deepStrictEqual(got.headers, ['__proto__', 'constructor', 'toString', 'duplicate', 'duplicate', '__proto__'])
+    assert.deepStrictEqual(got.types, {
+      ['__proto__']: 'NULL',
+      constructor: 'INT32',
+      toString: 'VARCHAR',
+      duplicate: 'VARCHAR'
+    })
+    assert.strictEqual(Object.getPrototypeOf(got.types), Object.prototype)
+    assert.deepStrictEqual(Object.getOwnPropertyDescriptor(got.types, '__proto__'), {
+      value: 'NULL',
+      enumerable: true,
+      writable: true,
+      configurable: true
+    })
+  })
+
   test('it properly returns an executed query for a DDL statement', async () => {
     const mockResponse = {
       session: mockSession,
