@@ -294,8 +294,7 @@ export class Connection {
     const rows = result ? parse<T>(result, castFn, options.as || 'object') : []
     const headers = fields.map((f) => f.name)
 
-    const typeByName = (acc: Types, { name, type }: Field) => ({ ...acc, [name]: type })
-    const types = fields.reduce<Types>(typeByName, {})
+    const types: Types = Object.fromEntries(fields.map(({ name, type }) => [name, type]))
     const timingSeconds = timing ?? 0
 
     return {
