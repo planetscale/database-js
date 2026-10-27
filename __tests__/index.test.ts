@@ -32,6 +32,27 @@ function assertDatabaseError(err: unknown, message: string, status: number, body
 }
 
 describe('config', () => {
+  for (const [username, password] of [
+    ['some@user', 'p@ss:/%word'],
+    ['some/user', 'literal%2Fencoded'],
+    ['some user', 'pass word']
+  ]) {
+    test(`decodes URL credentials for ${username}`, async () => {
+      mockPool.intercept({ path: EXECUTE_PATH, method: 'POST' }).reply(200, (opts: any) => {
+        assert.strictEqual(opts.headers['Authorization'], `Basic ${btoa(`${username}:${password}`)}`)
+        return { session: mockSession, result: { fields: [], rows: [] } }
+      })
+
+      const connection = connect({
+        fetch,
+        url: `mysql://${encodeURIComponent(username)}:${encodeURIComponent(password)}@example.com`
+      })
+      await connection.execute('SELECT 1')
+      assert.strictEqual(connection.config.username, username)
+      assert.strictEqual(connection.config.password, password)
+    })
+  }
+
   test('parses database url', async () => {
     const mockResponse = {
       session: mockSession,
