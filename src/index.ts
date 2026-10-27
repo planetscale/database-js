@@ -224,8 +224,8 @@ export class Connection {
 
     if (config.url) {
       const url = new URL(config.url)
-      this.config.username = url.username
-      this.config.password = url.password
+      this.config.username = decodeURIComponent(url.username)
+      this.config.password = decodeURIComponent(url.password)
       this.config.host = url.hostname
       this.url = buildURL(url)
     } else {
