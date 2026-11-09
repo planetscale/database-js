@@ -29,7 +29,7 @@
     "clean": "rm -rf dist/",
     "build": "npm run clean && tsc && tsc --module commonjs --outDir dist/cjs && echo '{\"type\": \"commonjs\"}' > dist/cjs/package.json",
     "lint": "eslint src/ __tests__/",
-    "test": "npm run build && node --import tsx --test __tests__/*.test.ts",
+    "test": "npm run build && tsc --noEmit --strict --target es2020 --moduleResolution node __tests__/types.ts && node --import tsx --test __tests__/*.test.ts",
     "version": "echo \"export const Version = '$npm_package_version'\" > src/version.ts && git add src/version.ts && npm run build"
   },
   "repository": {
