@@ -124,9 +124,9 @@ interface QueryResult {
 
 type ExecuteAs = 'array' | 'object'
 
-type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'array'
+type ExecuteOptions<T extends ExecuteAs = 'object'> = T extends 'object'
   ? { as?: 'object'; cast?: Cast }
-  : T extends 'object'
+  : T extends 'array'
   ? { as: 'array'; cast?: Cast }
   : never
 
